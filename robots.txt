@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /post.html
 
-Sitemap: https://aadi-digital-lab.pages.dev/
+Sitemap: https://aadi-digital-lab.pages.dev/sitemap.xml
