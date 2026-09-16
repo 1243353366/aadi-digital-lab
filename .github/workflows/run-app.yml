@@ -1,0 +1,68 @@
+name: Run the app (sandbox smoke test)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Boot the site + D1 (GitHub-hosted sandbox)
+        run: |
+          npx -y wrangler@4 pages dev . --port 8788 --d1 DB > server.log 2>&1 &
+          for i in $(seq 1 90); do
+            curl -s -o /dev/null http://localhost:8788/ && break
+            sleep 2
+          done
+          curl -s -o /dev/null -w "home page -> HTTP %{http_code}\n" http://localhost:8788/
+
+      - name: Seed the D1 database
+        run: |
+          DB=$(find .wrangler/state -name "*.sqlite" | head -1)
+          echo "seeding: $DB"
+          sqlite3 "$DB" < schema.sql
+          sqlite3 "$DB" "SELECT COUNT(*) || ' posts, ' || (SELECT COUNT(*) FROM tags) || ' tags seeded' FROM posts;"
+
+      - name: Home page renders
+        run: curl -s http://localhost:8788/ | grep -q "Aadi" && echo "home renders: OK"
+
+      - name: Search test - "checklist" must return the OSINT post
+        run: |
+          echo '--- search results for "checklist" ---'
+          curl -s "http://localhost:8788/api/posts?q=checklist"
+          echo
+          curl -s "http://localhost:8788/api/posts?q=checklist" | grep -q "The OSINT checklist I actually use" && echo "search: OK"
+          curl -s "http://localhost:8788/api/posts?q=zzzznotfound" | grep -q '\[\]' && echo "zero-results state: OK"
+
+      - name: Tag filter test
+        run: |
+          curl -s "http://localhost:8788/api/posts?tag=research" | grep -q "OSINT checklist" && echo "tag filter: OK"
+
+      - name: Comments + likes write tests
+        run: |
+          curl -s -X POST http://localhost:8788/api/post/hello-from-the-lab/comments \
+            -H "Content-Type: application/json" \
+            -d '{"author":"GitHub Action","body":"This comment was posted by CI from inside the sandbox."}' | grep -q ok
+          curl -s http://localhost:8788/api/post/hello-from-the-lab/comments | grep -q "posted by CI" && echo "comments: OK"
+          curl -s -X POST http://localhost:8788/api/post/hello-from-the-lab/like \
+            -H "Content-Type: application/json" \
+            -d '{"visitor":"cI-RuNn3r-AbCdEfGh"}' | grep -q '"liked":true' && echo "likes: OK"
+
+      - name: Auth gate test - unauthenticated create must be rejected
+        run: |
+          CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST http://localhost:8788/api/posts/create \
+            -H "Content-Type: application/json" -d '{"title":"unauthorized","content":"nope"}')
+          echo "unauthenticated /api/posts/create -> HTTP $CODE"
+          [ "$CODE" = "401" ] && echo "auth gate: OK"
+
+      - name: Server log tail
+        if: always()
+        run: tail -15 server.log || true
