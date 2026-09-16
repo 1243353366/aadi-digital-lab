@@ -730,3 +730,19 @@ html.js .reveal.visible { opacity: 1; transform: none; }
 .repo-desc { margin: 0; font-size: 0.88rem; color: var(--muted); flex: 1; }
 .repo-meta { margin: 0; font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.05em; color: var(--muted); display: flex; flex-wrap: wrap; gap: 8px; }
 .repo-more { justify-content: center; align-items: center; color: var(--accent); font-family: var(--font-mono); font-size: 0.8rem; }
+
+/* ---------- Ethics callout ---------- */
+.ethics-note {
+  border: 1px solid var(--accent);
+  border-radius: 14px;
+  background: var(--accent-soft);
+  padding: 20px 24px;
+  margin: 28px 0 8px;
+  max-width: 760px;
+}
+.ethics-note .eyebrow { margin-bottom: 6px; color: var(--accent); }
+.ethics-note p:last-child { margin: 0; color: var(--muted); }
+
+/* ---------- 404 ---------- */
+.err-page { text-align: center; padding: 140px 0 160px; }
+.err-code { font-family: var(--font-mono); font-size: 4rem; color: var(--accent); margin: 0 0 8px; }

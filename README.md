@@ -155,3 +155,12 @@ activity, and a repository card grid — all from GitHub's public API
 (unauthenticated, rate-limited, with explicit paused/rate-limit states per
 section). Charts are hand-rolled SVG using the site's CSS variables, so
 they follow the dark/light theme automatically.
+
+## Ethics & responsible use
+
+Everything published in Aadi's Digital Lab is built from publicly available,
+legally obtained sources. The methods documented here are provided for
+research, journalism, and public-interest work only — never for harassment,
+doxxing, or unlawful activity. If you use anything from this repository,
+you are responsible for complying with the laws and platform terms that
+apply to you. Verify before you amplify.
