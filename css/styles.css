@@ -542,3 +542,21 @@ html.js .reveal.visible { opacity: 1; transform: none; }
   }
   html.js .reveal { opacity: 1; transform: none; }
 }
+
+/* ---------- Mobile dropdown menu (nav-open state) ---------- */
+@media (max-width: 819.98px) {
+  body.nav-open .nav-menu {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+    position: absolute;
+    top: var(--nav-h);
+    left: 0;
+    right: 0;
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 24px 26px;
+    box-shadow: var(--shadow);
+  }
+}
