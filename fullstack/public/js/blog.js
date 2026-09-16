@@ -39,7 +39,7 @@ async function load() {
     statusEl.hidden = true;
     renderPosts(posts);
   } catch (err) {
-    statusEl.textContent = "The blog API isn't connected yet. Create a D1 database named blog_db, import schema.sql, and bind it as DB in your Cloudflare Pages project.";
+    statusEl.textContent = "The blog API isn't connected yet. Create a D1 database named blog_db, import schema.sql, and bind it as DB in your Cloudflare project.";
   }
 }
 

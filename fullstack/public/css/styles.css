@@ -125,6 +125,12 @@ h2 { font-size: clamp(1.9rem, 4.5vw, 2.6rem); margin-bottom: 18px; }
   color: transparent;
 }
 
+/* Keep the accent phrase on one line where there is room; below 640px it must
+   be able to wrap — a non-breaking space here clipped it mid-word on phones. */
+@media (min-width: 640px) {
+  .accent-text { white-space: nowrap; }
+}
+
 /* ---------- Navigation ---------- */
 .nav {
   position: fixed;
@@ -338,7 +344,7 @@ body.nav-open .burger-bar:nth-child(3) { transform: translateY(-6px) rotate(-45d
 .tag {
   display: inline-block;
   font-family: var(--font-mono);
-  font-size: 0.68rem;
+  font-size: 0.7rem;
   font-weight: 600;
   letter-spacing: 0.14em;
   color: var(--accent);
@@ -644,7 +650,7 @@ html.js .reveal.visible { opacity: 1; transform: none; }
 /* ---------- admin ---------- */
 .admin-body { background: var(--bg); }
 .admin-badge {
-  font-family: var(--font-mono); font-size: 0.62rem; letter-spacing: 0.14em;
+  font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.14em;
   text-transform: uppercase; color: var(--accent);
   border: 1px solid var(--accent); border-radius: 6px; padding: 2px 7px;
   margin-left: 8px; vertical-align: middle;
