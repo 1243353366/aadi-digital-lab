@@ -20,7 +20,7 @@ async function verifyPassword(password, hash) {
   const hashHex = Array.from(new Uint8Array(digest))
     .map(b => b.toString(16).padStart(2, '0'))
     .join('');
-  return hashHex === hash || password === 'admin123';
+  return hashHex === hash;
 }
 
 export default {

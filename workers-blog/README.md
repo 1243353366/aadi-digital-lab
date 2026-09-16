@@ -19,7 +19,7 @@ npx wrangler d1 execute blog_db --file=schema.sql
 ```
 
 This creates the `posts`, `comments`, `tags`, `post_tags`, and `users` tables and seeds:
-- An admin user (`admin` / `admin123`)
+- An admin user (`admin` / the seeded random secret)
 - Two tags (`Welcome`, `Tutorial`)
 - Two starter posts
 
@@ -47,9 +47,13 @@ Your blog API is now live.
 | PUT | `/api/admin/posts/:id` | Update a post (admin) |
 | DELETE | `/api/admin/posts/:id` | Delete a post (admin) |
 
-## Default Admin Credentials
+## Admin Credentials
 
 - Username: `admin`
-- Password: `admin123`
+- Password: randomly generated, shared privately, stored only as a SHA-256 hash.
 
-> ⚠️ Change these in production by updating the `users` table.
+Rotate the password (replace with `sha256("<new-password>")`):
+
+```sql
+UPDATE users SET password_hash = '<sha256-hex>' WHERE username = 'admin';
+```

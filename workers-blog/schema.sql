@@ -61,8 +61,8 @@ CREATE INDEX IF NOT EXISTS idx_comments_post_id ON comments(post_id);
 CREATE INDEX IF NOT EXISTS idx_post_tags_post_id ON post_tags(post_id);
 CREATE INDEX IF NOT EXISTS idx_post_tags_tag_id ON post_tags(tag_id);
 
--- Seed admin user (password: "admin123" — change in production!)
-INSERT INTO users (username, password_hash, role) VALUES ('admin', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', 'admin');
+-- Seed admin user (random password shared privately; stored as SHA-256)
+INSERT INTO users (username, password_hash, role) VALUES ('admin', 'c4ec784e78fd33f476e51137f9aa48ef178a9853768293dd7c71edb9b337958a', 'admin');
 
 -- Seed tags
 INSERT INTO tags (name, slug) VALUES ('Welcome', 'welcome');
