@@ -3,24 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Blog — Aadi's Digital Lab</title>
-  <meta name="description" content="Research writeups, OSINT methods, and AI experiment notes from Aadi's Digital Lab.">
-  <meta name="author" content="Aadi Shankar">
+  <title>Sign in — Aadi's Digital Lab</title>
+  <meta name="description" content="Admin sign-in for Aadi's Digital Lab.">
+  <meta name="robots" content="noindex">
   <meta name="color-scheme" content="dark light">
   <meta name="theme-color" content="#0b1220">
-
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="Aadi's Digital Lab">
-  <meta property="og:title" content="Blog — Aadi's Digital Lab">
-  <meta property="og:description" content="Research writeups, OSINT methods, and AI experiment notes.">
-  <meta property="og:url" content="https://aadi-digital-lab.pages.dev/blog.html">
-  <meta property="og:image" content="https://aadi-digital-lab.pages.dev/favicon.svg">
-
-  <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="Blog — Aadi's Digital Lab">
-  <meta name="twitter:description" content="Research writeups, OSINT methods, and AI experiment notes.">
-
-  <link rel="canonical" href="https://aadi-digital-lab.pages.dev/blog.html">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
   <script>
@@ -52,15 +39,10 @@
         </svg>
         <span>Aadi&rsquo;s Digital&nbsp;Lab</span>
       </a>
-
       <nav class="nav-menu" id="nav-links" aria-label="Primary">
-        <a href="index.html#about">About</a>
-        <a href="index.html#research">Research &amp; OSINT</a>
-        <a href="index.html#ai">AI Tools</a>
-        <a href="blog.html" aria-current="page">Blog</a>
+        <a href="blog.html">Blog</a>
         <a href="index.html#contact">Contact</a>
       </nav>
-
       <div class="nav-actions">
         <button id="theme-toggle" class="icon-btn" type="button" aria-label="Toggle dark mode" title="Toggle theme">
           <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -71,41 +53,40 @@
             <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
           </svg>
         </button>
-        <button id="nav-toggle" class="icon-btn nav-burger" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="nav-links">
-          <span class="burger-bar"></span>
-          <span class="burger-bar"></span>
-          <span class="burger-bar"></span>
-        </button>
       </div>
     </div>
   </header>
 
   <main id="main">
-    <div class="wrap page-head">
-      <h1>Notes from the bench.</h1>
-      <p>Research writeups, tool breakdowns, and experiment results — published as they happen.</p>
-    </div>
-
-    <div class="wrap blog-controls">
-      <label class="sr-only" for="search">Search posts</label>
-      <input id="search" class="search-input" type="search" placeholder="Search posts&hellip;" autocomplete="off">
-      <div id="tag-cloud" class="tag-cloud" aria-label="Filter by tag"></div>
-    </div>
-
-    <div class="wrap post-list">
-      <p id="blog-status" class="status-note" hidden>Loading posts&hellip;</p>
-      <div id="post-list"></div>
+    <div class="wrap login-page">
+      <div class="login-card">
+        <p class="eyebrow">Admin access</p>
+        <h1>Sign in</h1>
+        <p class="post-meta">Manage posts, tags, and settings.</p>
+        <form id="login-form">
+          <div class="field">
+            <label for="l-user">Username</label>
+            <input id="l-user" name="username" type="text" autocomplete="username" required>
+          </div>
+          <div class="field">
+            <label for="l-pass">Password</label>
+            <input id="l-pass" name="password" type="password" autocomplete="current-password" required>
+          </div>
+          <button class="btn btn-primary btn-block" type="submit" id="login-btn">Sign in</button>
+          <p id="login-msg" class="status-note" hidden></p>
+        </form>
+      </div>
     </div>
   </main>
 
   <footer class="footer">
     <div class="wrap footer-bottom">
-      <p>&copy; <span id="year">2026</span> Aadi&rsquo;s Digital Lab &middot; MIT License</p>
+      <p>&copy; <span id="year">2026</span> Aadi&rsquo;s Digital Lab</p>
       <p><a href="index.html">Back to the Lab &rarr;</a></p>
     </div>
   </footer>
 
   <script src="js/main.js" defer></script>
-  <script type="module" src="js/blog.js"></script>
+  <script type="module" src="js/login.js"></script>
 </body>
 </html>

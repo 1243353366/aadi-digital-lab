@@ -1,60 +1,73 @@
-/* Aadi's Digital Lab — blog.js
-   Fetches posts from the Cloudflare Pages Function at /api/posts (D1-backed). */
+/* Blog list with search + tag filtering. */
+import { esc, excerpt, fmtDate, usePosts, useTags } from "./api.js";
 
-(function () {
-  "use strict";
+const listEl = document.getElementById("post-list");
+const statusEl = document.getElementById("blog-status");
+const searchEl = document.getElementById("search");
+const tagCloudEl = document.getElementById("tag-cloud");
 
-  var listEl = document.getElementById("post-list");
-  var statusEl = document.getElementById("blog-status");
+const params = new URLSearchParams(location.search);
+let activeTag = params.get("tag") || "";
+let query = "";
+let debounceTimer = null;
 
-  function esc(s) {
-    return String(s).replace(/[&<>"']/g, function (c) {
-      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
-    });
+function renderTagCloud(tags) {
+  tagCloudEl.innerHTML = tags
+    .map((t) => `<button class="tag-pill${t.name === activeTag ? " active" : ""}" data-tag="${esc(t.name)}" type="button">${esc(t.name)} <span class="tag-count">${t.count}</span></button>`)
+    .join("");
+}
+
+function renderPosts(posts) {
+  if (!posts.length) {
+    listEl.innerHTML = `<p class="status-note">No posts${query ? ` matching “${esc(query)}”` : ""}${activeTag ? ` tagged “${esc(activeTag)}”` : ""} yet.</p>`;
+    return;
   }
+  listEl.innerHTML = posts.map((p) => `
+    <article class="post-item">
+      <a class="post-title" href="post.html?slug=${encodeURIComponent(p.slug)}">${esc(p.title)}</a>
+      <p class="post-meta">${esc(fmtDate(p.created_at))}</p>
+      <p class="post-excerpt">${esc(excerpt(p.content))}</p>
+    </article>`).join("");
+}
 
-  function excerpt(text, len) {
-    var t = String(text || "").replace(/\s+/g, " ").trim();
-    return t.length > len ? t.slice(0, len).trimEnd() + "…" : t;
+async function load() {
+  statusEl.hidden = false;
+  statusEl.textContent = "Loading posts\u2026";
+  listEl.innerHTML = "";
+  try {
+    const posts = await usePosts({ q: query, tag: activeTag });
+    statusEl.hidden = true;
+    renderPosts(posts);
+  } catch (err) {
+    statusEl.textContent = "The blog API isn't connected yet. Create a D1 database named blog_db, import schema.sql, and bind it as DB in your Cloudflare Pages project.";
   }
+}
 
-  function fmtDate(iso) {
-    var d = new Date(iso);
-    return isNaN(d.getTime()) ? String(iso) :
-      d.toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" });
-  }
+/* Tag pills */
+useTags()
+  .then((tags) => {
+    if (Array.isArray(tags) && tags.length) renderTagCloud(tags);
+  })
+  .catch(() => { /* tag bar is optional if D1 isn't wired yet */ });
 
-  function showStatus(msg) {
-    if (!statusEl) return;
-    statusEl.hidden = false;
-    statusEl.textContent = msg;
-  }
+tagCloudEl.addEventListener("click", (e) => {
+  const btn = e.target.closest(".tag-pill");
+  if (!btn) return;
+  activeTag = btn.dataset.tag === activeTag ? "" : btn.dataset.tag;
+  const url = new URL(location.href);
+  if (activeTag) url.searchParams.set("tag", activeTag); else url.searchParams.delete("tag");
+  history.replaceState(null, "", url);
+  tagCloudEl.querySelectorAll(".tag-pill").forEach((p) => p.classList.toggle("active", p.dataset.tag === activeTag));
+  load();
+});
 
-  fetch("/api/posts")
-    .then(function (res) {
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      return res.json();
-    })
-    .then(function (posts) {
-      if (!Array.isArray(posts) || posts.length === 0) {
-        showStatus("No posts yet — the first one is being written.");
-        return;
-      }
-      if (statusEl) statusEl.hidden = true;
-      listEl.innerHTML = posts.map(function (p) {
-        return (
-          '<article class="post-item">' +
-            '<a class="post-title" href="post.html?slug=' + encodeURIComponent(p.slug) + '">' + esc(p.title) + "</a>" +
-            '<p class="post-meta">' + esc(fmtDate(p.created_at)) + "</p>" +
-            '<p class="post-excerpt">' + esc(excerpt(p.content, 180)) + "</p>" +
-          "</article>"
-        );
-      }).join("");
-    })
-    .catch(function () {
-      showStatus(
-        "The blog API isn't connected yet. Create a D1 database named blog_db, import schema.sql, " +
-        "and bind it as DB in your Cloudflare Pages project — see README.md for the 2-minute setup."
-      );
-    });
-})();
+/* Search (debounced) */
+searchEl.addEventListener("input", () => {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(() => {
+    query = searchEl.value.trim();
+    load();
+  }, 250);
+});
+
+load();

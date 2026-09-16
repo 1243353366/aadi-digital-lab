@@ -1,33 +1,20 @@
-/* GET /api/post/:slug — fetch a single blog post by its slug. */
-
-const JSON_HEADERS = { "Content-Type": "application/json; charset=utf-8" };
+import { json } from "../../_shared.js";
 
 export async function onRequestGet(context) {
   const db = context.env.DB;
+  if (!db) return json({ error: "D1 database not bound." }, 503);
+
   const slug = context.params.slug;
-
-  if (!db) {
-    return new Response(
-      JSON.stringify({ error: "D1 database not bound. Bind a D1 database named blog_db as DB in your Cloudflare Pages project." }),
-      { status: 503, headers: JSON_HEADERS }
-    );
-  }
-
   try {
-    const post = await db
-      .prepare("SELECT id, title, slug, content, created_at, updated_at FROM posts WHERE slug = ?")
-      .bind(slug)
-      .first();
-
-    if (!post) {
-      return new Response(JSON.stringify({ error: "Post not found." }), { status: 404, headers: JSON_HEADERS });
-    }
-
-    return new Response(JSON.stringify(post), { headers: JSON_HEADERS });
-  } catch (err) {
-    return new Response(
-      JSON.stringify({ error: "Failed to load the post." }),
-      { status: 500, headers: JSON_HEADERS }
-    );
+    const post = await db.prepare("SELECT * FROM posts WHERE slug = ?").bind(slug).first();
+    if (!post) return json({ error: "Not found" }, 404);
+    const { results: tags } = await db.prepare(
+      `SELECT t.name FROM tags t
+       JOIN post_tags pt ON pt.tag_id = t.id
+       WHERE pt.post_id = ?`
+    ).bind(post.id).all();
+    return json({ ...post, tags: tags.map((t) => t.name) });
+  } catch {
+    return json({ error: "Query failed. Did you import schema.sql into the D1 database?" }, 500);
   }
 }

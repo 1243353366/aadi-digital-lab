@@ -98,3 +98,51 @@ Or POST to `/api/post/:slug/comments` from the post page to add comments.
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+---
+
+## App v2 — full platform update (2026-09)
+
+The blog is now a real app: authentication, admin dashboard, tags,
+search, likes, and comments — still pure HTML/CSS/JS with zero build step.
+
+### New database tables (`schema.sql`)
+`users` · `sessions` · `likes` · `tags` · `post_tags` (plus existing
+`posts` / `comments`). Re-importing `schema.sql` on an existing database
+is safe: all creates are `IF NOT EXISTS`, seeds are `INSERT OR IGNORE`.
+
+### API surface
+| Method | Route | Auth |
+|---|---|---|
+| POST | `/api/auth/login` | public |
+| POST | `/api/auth/logout` | public |
+| GET | `/api/auth/me` | session |
+| POST | `/api/auth/password` | session |
+| GET | `/api/posts?q=…&tag=…` | public |
+| GET | `/api/post/:slug` | public |
+| GET/POST | `/api/post/:slug/comments` | public |
+| GET/POST | `/api/post/:slug/like` | public |
+| GET | `/api/tags` | public |
+| POST | `/api/posts/create` | admin |
+| POST | `/api/posts/update` | admin |
+| POST | `/api/posts/delete` | admin |
+
+### Pages
+- `/` — marketing site
+- `/blog.html` — searchable, tag-filtered post list
+- `/post.html?slug=…` — post with tags, like button, comments
+- `/login.html` — sign-in (seeded user: `aadi`, password shipped with the
+  schema — **change it in Settings after first login**)
+- `/admin/` — dashboard SPA (`#/posts`, `#/new`, `#/edit/:slug`,
+  `#/settings`) with hash routing, toasts, and loading/error states
+
+### Auth design
+PBKDF2-SHA256 (100k iterations) password hashing via Web Crypto; sessions
+are 32-byte random tokens, stored hashed (SHA-256) in D1, delivered as
+`HttpOnly; Secure; SameSite=Lax` cookies with a 7-day TTL. All admin
+writes are gated server-side.
+
+### CI
+`.github/workflows/ci.yml` builds the Pages Functions with Wrangler,
+syntax-checks the frontend modules with esbuild, and lints `schema.sql`
+against real SQLite on every push.

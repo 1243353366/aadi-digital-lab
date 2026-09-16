@@ -1,0 +1,29 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Validate Cloudflare Pages Functions
+        run: npx -y wrangler@4 pages functions build --outdir .functions-dist
+
+      - name: Syntax-check frontend JS modules
+        run: npx -y esbuild js/*.js --outdir=.js-dist --format=esm
+
+      - name: Lint the D1 schema with SQLite
+        run: |
+          sudo apt-get install -y -q sqlite3
+          sqlite3 /tmp/check.db < schema.sql
+          sqlite3 /tmp/check.db "SELECT COUNT(*) FROM posts; SELECT COUNT(*) FROM users;"

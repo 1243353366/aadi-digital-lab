@@ -4,12 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Post — Aadi's Digital Lab</title>
-  <meta name="description" content="A research writeup from Aadi's Digital Lab.">
+  <meta name="description" content="A post from Aadi's Digital Lab — research, OSINT, AI, and systems thinking.">
   <meta name="author" content="Aadi Shankar">
   <meta name="color-scheme" content="dark light">
   <meta name="theme-color" content="#0b1220">
-  <meta name="robots" content="noindex">
 
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Aadi's Digital Lab">
+  <meta property="og:title" content="Post — Aadi's Digital Lab">
+  <meta property="og:description" content="Research, OSINT, AI, and systems thinking.">
+  <meta property="og:url" content="https://aadi-digital-lab.pages.dev/post.html">
+  <meta property="og:image" content="https://aadi-digital-lab.pages.dev/favicon.svg">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Post — Aadi's Digital Lab">
+  <meta name="twitter:description" content="Research, OSINT, AI, and systems thinking.">
+
+  <link rel="canonical" href="https://aadi-digital-lab.pages.dev/post.html">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
   <script>
@@ -70,43 +81,49 @@
   </header>
 
   <main id="main">
-    <div class="wrap page-head">
-      <a class="backlink" href="blog.html">&larr; All posts</a>
-      <h1 id="post-title" class="article-title">Loading…</h1>
-      <p id="post-date" class="post-meta"></p>
-    </div>
+    <article class="wrap post-page">
+      <p id="post-status" class="status-note">Loading post\u2026</p>
 
-    <div class="wrap article">
-      <div id="post-body" class="article-body"></div>
-    </div>
+      <div id="post-body" hidden>
+        <p><a class="post-back" href="blog.html">&larr; All posts</a></p>
+        <h1 id="post-title"></h1>
+        <p class="post-meta" id="post-date"></p>
+        <div id="post-tags" class="tag-cloud"></div>
+        <div id="post-content" class="post-content"></div>
 
-    <div class="wrap comments">
-      <h2>Comments</h2>
-      <div id="comments-list"></div>
+        <button id="like-btn" class="btn btn-ghost like-btn" type="button" aria-pressed="false">
+          <span aria-hidden="true">&hearts;</span> <span id="like-count">0</span>
+          <span class="sr-only">likes — click to like</span>
+        </button>
 
-      <form id="comment-form" class="form" novalidate>
-        <div>
-          <label for="comment-author">Name</label>
-          <input id="comment-author" name="author" type="text" maxlength="80" placeholder="Your name" required>
-        </div>
-        <div>
-          <label for="comment-body">Comment</label>
-          <textarea id="comment-body" name="body" maxlength="2000" placeholder="Add to the discussion…" required></textarea>
-        </div>
-        <button class="btn btn-primary" type="submit">Post comment</button>
-        <p id="comment-msg" class="form-msg" role="status"></p>
-      </form>
-    </div>
+        <section class="comments-section" aria-label="Comments">
+          <h2>Comments</h2>
+          <div id="comments"></div>
+          <form id="comment-form" class="comment-form">
+            <div class="field">
+              <label for="c-author">Name</label>
+              <input id="c-author" name="author" type="text" maxlength="80" required placeholder="Your name">
+            </div>
+            <div class="field">
+              <label for="c-body">Comment</label>
+              <textarea id="c-body" name="body" rows="4" maxlength="2000" required placeholder="Add to the discussion&hellip;"></textarea>
+            </div>
+            <button class="btn btn-primary" type="submit">Post comment</button>
+            <p id="comment-msg" class="status-note" hidden></p>
+          </form>
+        </section>
+      </div>
+    </article>
   </main>
 
   <footer class="footer">
     <div class="wrap footer-bottom">
       <p>&copy; <span id="year">2026</span> Aadi&rsquo;s Digital Lab &middot; MIT License</p>
-      <p><a href="index.html">Back to the Lab &rarr;</a></p>
+      <p><a href="blog.html">Back to the blog &rarr;</a></p>
     </div>
   </footer>
 
   <script src="js/main.js" defer></script>
-  <script src="js/post.js" defer></script>
+  <script type="module" src="js/post.js"></script>
 </body>
 </html>
