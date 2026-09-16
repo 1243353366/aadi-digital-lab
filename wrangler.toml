@@ -1,5 +1,5 @@
 name = "aadi-digital-lab"
-compatibility_date = "2026-09-16"
+compatibility_date = "2026-05-01"
 pages_build_output_dir = "."
 
 # D1 binding for the blog API.
