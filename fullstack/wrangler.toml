@@ -1,0 +1,13 @@
+name = "aadi-digital-lab-fullstack"
+main = "src/index.js"
+compatibility_date = "2026-05-01"
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+not_found_handling = "404-page"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "blog_db"
+database_id = "038c5843-0c9d-43ea-8347-b8840768b95d"

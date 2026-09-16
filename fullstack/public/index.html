@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aadi's Digital Lab — Research, OSINT, AI, and Systems Thinking</title>
+  <meta name="description" content="Aadi's Digital Lab: research notebooks, OSINT methodology, AI tools and experiments, and systems thinking — methods documented so results can be reproduced.">
+  <meta name="author" content="Aadi Shankar">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#0b1220">
+
+  <!-- OpenGraph -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Aadi's Digital Lab">
+  <meta property="og:title" content="Aadi's Digital Lab — Research, OSINT, AI, and Systems Thinking">
+  <meta property="og:description" content="Research notebooks, OSINT methodology, AI tools and experiments, and systems thinking.">
+  <meta property="og:url" content="https://aadi-digital-lab.pages.dev/">
+  <meta property="og:image" content="https://aadi-digital-lab.pages.dev/favicon.svg">
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Aadi's Digital Lab">
+  <meta name="twitter:description" content="Research, OSINT, AI, and Systems Thinking.">
+
+  <link rel="canonical" href="https://aadi-digital-lab.pages.dev/">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Aadi's Digital Lab",
+    "alternateName": "Aadi's Digital Lab",
+    "url": "https://aadi-digital-lab.pages.dev/",
+    "description": "Research, OSINT, AI, and Systems Thinking.",
+    "inLanguage": "en"
+  }
+  </script>
+
+  <!-- Set theme before first paint to avoid a flash -->
+  <script>
+    (function () {
+      var t = "dark";
+      try {
+        t = localStorage.getItem("adl-theme") ||
+            (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+      } catch (e) {}
+      document.documentElement.setAttribute("data-theme", t);
+      document.documentElement.classList.add("js");
+    })();
+  </script>
+
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="nav" id="top">
+    <div class="wrap nav-inner">
+      <a class="logo" href="#top" aria-label="Aadi's Digital Lab — home">
+        <svg class="logo-mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+          <rect width="64" height="64" rx="14" fill="var(--accent-soft)"/>
+          <path d="M27 12h10v9l11.5 22.8A5 5 0 0 1 44.1 51H19.9a5 5 0 0 1-4.4-7.2L27 21z"
+                fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+          <circle cx="27" cy="43" r="2.5" fill="currentColor"/>
+          <circle cx="36" cy="45.5" r="1.8" fill="currentColor"/>
+        </svg>
+        <span>Aadi&rsquo;s Digital&nbsp;Lab</span>
+      </a>
+
+      <nav class="nav-menu" id="nav-links" aria-label="Primary">
+        <a href="#about">About</a>
+        <a href="#research">Research &amp; OSINT</a>
+        <a href="#ai">AI Tools</a>
+        <a href="blog.html">Blog</a>
+        <a href="console.html">Console</a>
+        <a href="#contact">Contact</a>
+      </nav>
+
+      <div class="nav-actions">
+        <button id="theme-toggle" class="icon-btn" type="button" aria-label="Toggle dark mode" title="Toggle theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+          </svg>
+        </button>
+        <button id="nav-toggle" class="icon-btn nav-burger" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="nav-links">
+          <span class="burger-bar"></span>
+          <span class="burger-bar"></span>
+          <span class="burger-bar"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- ============ HERO ============ -->
+    <section class="hero">
+      <div class="wrap hero-inner">
+        <p class="eyebrow reveal" style="--d:0">Aadi&rsquo;s Digital Lab</p>
+        <h1 class="reveal" style="--d:1">Research, OSINT, AI, and <span class="accent-text">Systems&nbsp;Thinking.</span></h1>
+        <p class="hero-sub reveal" style="--d:2">A working notebook in public — open-source research methods,
+          reproducible experiments, and the tools that make both possible.</p>
+        <div class="hero-cta reveal" style="--d:3">
+          <a class="btn btn-primary" href="#about">Explore the Lab</a>
+          <a class="btn btn-ghost" href="blog.html">Read the Blog</a>
+        </div>
+        <div class="hero-meta reveal" style="--d:4">
+          <span>Provenance first</span><span>·</span><span>Conclusions traceable</span><span>·</span><span>Everything reproducible</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ ABOUT ============ -->
+    <section id="about" class="section">
+      <div class="wrap">
+        <p class="eyebrow reveal">01 — About the Lab</p>
+        <h2 class="reveal" style="--d:1">A place where curiosity becomes capability.</h2>
+        <p class="lead reveal" style="--d:2">
+          The Lab is a personal research environment for studying systems — technical, social, and
+          informational. Every investigation starts with a question and ends with something you can check:
+          a method, a dataset, a tool, or a well-sourced writeup.
+        </p>
+        <div class="grid">
+          <article class="card reveal" style="--d:0">
+            <h3>First principles</h3>
+            <p>Problems get broken down to what is verifiably true, then understanding is rebuilt from
+              there — no inherited assumptions, no vibes-based analysis.</p>
+          </article>
+          <article class="card reveal" style="--d:1">
+            <h3>Structured analysis</h3>
+            <p>Every claim carries a confidence level, and every conclusion traces back to named sources.
+              Techniques borrow from structured analytic tradecraft.</p>
+          </article>
+          <article class="card reveal" style="--d:2">
+            <h3>Build in public</h3>
+            <p>Methods, notebooks, dead ends, and failures get documented anyway — that is what makes the
+              results reproducible and the process honest.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ RESEARCH & OSINT ============ -->
+    <section id="research" class="section section-alt">
+      <div class="wrap">
+        <p class="eyebrow reveal">02 — Research &amp; OSINT</p>
+        <h2 class="reveal" style="--d:1">Open sources, closed loops.</h2>
+        <p class="lead reveal" style="--d:2">
+          OSINT here means reproducible open-source research: an explicit collection plan, structured source
+          validation, and version-controlled notebooks. Provenance first, conclusions second.
+        </p>
+
+        <div class="ethics-note" id="ethics">
+          <p class="eyebrow">Ethics &amp; responsible use</p>
+          <p>Everything published in the Lab is built from publicly available, legally obtained sources. These methods exist for research, journalism, and public-interest work &mdash; never for harassment, doxxing, or unlawful activity. Verify before you amplify.</p>
+        </div>
+
+        <div class="grid">
+          <article class="card reveal" style="--d:0">
+            <span class="tag">ONGOING</span>
+            <h3>Threat &amp; actor research</h3>
+            <p>Tracking infrastructure, tactics, and campaigns across public data — registrars, passive DNS,
+              certificate logs, and archived artifacts.</p>
+          </article>
+          <article class="card reveal" style="--d:1">
+            <span class="tag">ONGOING</span>
+            <h3>Geospatial &amp; imagery</h3>
+            <p>Cross-referencing satellite imagery with flight, vessel, and seismic trackers to reconstruct
+              events on the ground with timelines.</p>
+          </article>
+          <article class="card reveal" style="--d:2">
+            <span class="tag">TOOLING</span>
+            <h3>Public records &amp; registries</h3>
+            <p>Corporate registries, procurement databases, and court records — the unglamorous documents that
+              quietly explain how systems actually work.</p>
+          </article>
+          <article class="card reveal" style="--d:3">
+            <span class="tag">RESEARCH</span>
+            <h3>Network &amp; influence analysis</h3>
+            <p>Mapping how narratives and coordination patterns propagate across platforms, using graph
+              analysis over the social footprint of a story.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ AI TOOLS & EXPERIMENTS ============ -->
+    <section id="ai" class="section">
+      <div class="wrap">
+        <p class="eyebrow reveal">03 — AI Tools &amp; Experiments</p>
+        <h2 class="reveal" style="--d:1">Models as instruments, not oracles.</h2>
+        <p class="lead reveal" style="--d:2">
+          AI in the Lab is treated like lab equipment: measured, benchmarked, and never trusted on faith.
+          These are the experiments currently on the bench.
+        </p>
+        <div class="grid">
+          <article class="card reveal" style="--d:0">
+            <span class="tag tag-live">LIVE</span>
+            <h3>Retrieval pipelines for research corpora</h3>
+            <p>Chunking and embedding search over thousands of pages of collected documents, so a finding is
+              always one query away from its source.</p>
+          </article>
+          <article class="card reveal" style="--d:1">
+            <span class="tag">EXPERIMENT</span>
+            <h3>Agentic research workflows</h3>
+            <p>Small multi-step agents that draft collection plans and pre-triage sources — every output is
+              reviewed by a human before it counts.</p>
+          </article>
+          <article class="card reveal" style="--d:2">
+            <span class="tag">PROTOTYPE</span>
+            <h3>Synthetic data for testing</h3>
+            <p>Generating realistic-but-fake datasets to stress-test detection rules and pipelines without
+              touching real personal data.</p>
+          </article>
+          <article class="card reveal" style="--d:3">
+            <span class="tag">NOTES</span>
+            <h3>LLM-assisted note triage</h3>
+            <p>Turning raw, messy research notes into structured, linked analysis that survives contact with
+              the next investigation.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ BLOG TEASER ============ -->
+    <section id="blog" class="section section-alt">
+      <div class="wrap teaser">
+        <div>
+          <p class="eyebrow reveal">04 — The Blog</p>
+          <h2 class="reveal" style="--d:1">Notes from the bench.</h2>
+          <p class="lead reveal" style="--d:2">Research writeups, tool breakdowns, and experiment results —
+            published as they happen, powered by a real database.</p>
+        </div>
+        <div class="reveal" style="--d:3">
+          <a class="btn btn-primary" href="blog.html">Read the Blog</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ CONTACT ============ -->
+    <section id="contact" class="section">
+      <div class="wrap contact">
+        <p class="eyebrow reveal">05 — Contact</p>
+        <h2 class="reveal" style="--d:1">Get in touch.</h2>
+        <p class="lead reveal" style="--d:2">
+          Collaborations, research questions, tool ideas, or just a good conversation about systems —
+          the inbox is open. Replies usually land within 48 hours.
+        </p>
+        <div class="reveal" style="--d:3">
+          <a class="btn btn-primary" href="mailto:aadishankar1999@gmail.com?subject=Hello%20from%20the%20Digital%20Lab">Email the Lab</a>
+        </div>
+        <p class="contact-mail reveal" style="--d:4">aadishankar1999@gmail.com</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-grid">
+      <div class="footer-brand">
+        <a class="logo" href="#top">
+          <svg class="logo-mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+            <rect width="64" height="64" rx="14" fill="var(--accent-soft)"/>
+            <path d="M27 12h10v9l11.5 22.8A5 5 0 0 1 44.1 51H19.9a5 5 0 0 1-4.4-7.2L27 21z"
+                  fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+            <circle cx="27" cy="43" r="2.5" fill="currentColor"/>
+            <circle cx="36" cy="45.5" r="1.8" fill="currentColor"/>
+          </svg>
+          <span>Aadi&rsquo;s Digital Lab</span>
+        </a>
+        <p>A working notebook on research, open-source intelligence, applied AI, and the systems that
+          connect them.</p>
+      </div>
+      <nav class="footer-col" aria-label="Explore">
+        <h3>Explore</h3>
+        <a href="#about">About the Lab</a>
+        <a href="#research">Research &amp; OSINT</a>
+        <a href="#ai">AI Tools &amp; Experiments</a>
+        <a href="blog.html">Blog</a>
+      </nav>
+      <div class="footer-col" aria-label="Contact">
+        <h3>Contact</h3>
+        <a href="mailto:aadishankar1999@gmail.com">aadishankar1999@gmail.com</a>
+        <a href="https://github.com/1243353366/aadi-digital-lab" target="_blank" rel="noopener">GitHub</a>
+        <a href="login.html">Admin</a>
+        <a href="#contact">Inbox open &mdash; ~48h replies</a>
+      </div>
+    </div>
+    <div class="wrap footer-bottom">
+      <p>&copy; <span id="year">2026</span> Aadi&rsquo;s Digital Lab &middot; MIT License</p>
+      <p>Built with plain HTML, CSS &amp; JS &mdash; no build step.</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js" defer></script>
+</body>
+</html>
