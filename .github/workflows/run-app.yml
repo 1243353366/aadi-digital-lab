@@ -33,7 +33,8 @@ jobs:
           sqlite3 "$DB" "SELECT COUNT(*) || ' posts, ' || (SELECT COUNT(*) FROM tags) || ' tags seeded' FROM posts;"
 
       - name: Home page renders
-        run: curl -s http://localhost:8788/ | grep -q "Aadi" && echo "home renders: OK"
+        run: |
+          curl -s http://localhost:8788/ | grep -q "Aadi" && echo "home renders: OK"
 
       - name: Search test - "checklist" must return the OSINT post
         run: |
@@ -66,4 +67,5 @@ jobs:
 
       - name: Server log tail
         if: always()
-        run: tail -15 server.log || true
+        run: |
+          tail -15 server.log || true
