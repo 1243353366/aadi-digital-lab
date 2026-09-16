@@ -24,13 +24,17 @@ jobs:
           done
           curl -s -o /dev/null -w "home page -> HTTP %{http_code}\n" http://localhost:8788/
 
-      - name: Seed the D1 database
+      - name: Seed the D1 database (target the D1 object, never other miniflare stores)
         run: |
           curl -s http://localhost:8788/api/posts > /dev/null || true
-          DB=$(find .wrangler/state -name "*.sqlite" ! -name "metadata.sqlite" | head -1)
+          DB=$(find .wrangler/state -path "*miniflare-D1DatabaseObject*" -name "*.sqlite" ! -name "metadata.sqlite" | head -1)
+          if [ -z "$DB" ]; then echo "D1 database file not found"; exit 1; fi
           echo "seeding: $DB"
           sqlite3 "$DB" < schema.sql
           sqlite3 "$DB" "SELECT COUNT(*) || ' posts, ' || (SELECT COUNT(*) FROM tags) || ' tags seeded' FROM posts;"
+          # verify through the RUNNING app, not just the file:
+          sleep 1
+          curl -s http://localhost:8788/api/tags | grep -q "osint" && echo "seed visible via API: OK"
 
       - name: Home page renders
         run: |
