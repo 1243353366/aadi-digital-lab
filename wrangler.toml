@@ -1,0 +1,13 @@
+name = "aadi-digital-lab"
+compatibility_date = "2026-09-16"
+pages_build_output_dir = "."
+
+# D1 binding for the blog API.
+# 1. Dashboard → Workers & Pages → D1 → Create database → name it "blog_db"
+# 2. Copy the generated database_id below (replacing the placeholder value).
+# 3. Or skip this file's binding and set it in the Pages project's
+#    Settings → Functions → D1 database bindings instead (binding name: DB).
+[[d1_databases]]
+binding = "DB"
+database_name = "blog_db"
+database_id = "00000000-0000-0000-0000-000000000000"

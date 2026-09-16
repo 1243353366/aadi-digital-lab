@@ -1,0 +1,12 @@
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.log
+.env
+.env.*
+
+# Node / tooling
+node_modules/
+.wrangler/
+dist/
+.dev.vars

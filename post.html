@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Post — Aadi's Digital Lab</title>
+  <meta name="description" content="A research writeup from Aadi's Digital Lab.">
+  <meta name="author" content="Aadi Shankar">
+  <meta name="color-scheme" content="dark light">
+  <meta name="theme-color" content="#0b1220">
+  <meta name="robots" content="noindex">
+
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+
+  <script>
+    (function () {
+      var t = "dark";
+      try {
+        t = localStorage.getItem("adl-theme") ||
+            (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+      } catch (e) {}
+      document.documentElement.setAttribute("data-theme", t);
+      document.documentElement.classList.add("js");
+    })();
+  </script>
+
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+
+  <header class="nav" id="top">
+    <div class="wrap nav-inner">
+      <a class="logo" href="index.html" aria-label="Aadi's Digital Lab — home">
+        <svg class="logo-mark" viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+          <rect width="64" height="64" rx="14" fill="var(--accent-soft)"/>
+          <path d="M27 12h10v9l11.5 22.8A5 5 0 0 1 44.1 51H19.9a5 5 0 0 1-4.4-7.2L27 21z"
+                fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/>
+          <circle cx="27" cy="43" r="2.5" fill="currentColor"/>
+          <circle cx="36" cy="45.5" r="1.8" fill="currentColor"/>
+        </svg>
+        <span>Aadi&rsquo;s Digital&nbsp;Lab</span>
+      </a>
+
+      <nav class="nav-menu" id="nav-links" aria-label="Primary">
+        <a href="index.html#about">About</a>
+        <a href="index.html#research">Research &amp; OSINT</a>
+        <a href="index.html#ai">AI Tools</a>
+        <a href="blog.html">Blog</a>
+        <a href="index.html#contact">Contact</a>
+      </nav>
+
+      <div class="nav-actions">
+        <button id="theme-toggle" class="icon-btn" type="button" aria-label="Toggle dark mode" title="Toggle theme">
+          <svg class="icon-moon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+          <svg class="icon-sun" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/>
+          </svg>
+        </button>
+        <button id="nav-toggle" class="icon-btn nav-burger" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="nav-links">
+          <span class="burger-bar"></span>
+          <span class="burger-bar"></span>
+          <span class="burger-bar"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="main">
+    <div class="wrap page-head">
+      <a class="backlink" href="blog.html">&larr; All posts</a>
+      <h1 id="post-title" class="article-title">Loading…</h1>
+      <p id="post-date" class="post-meta"></p>
+    </div>
+
+    <div class="wrap article">
+      <div id="post-body" class="article-body"></div>
+    </div>
+
+    <div class="wrap comments">
+      <h2>Comments</h2>
+      <div id="comments-list"></div>
+
+      <form id="comment-form" class="form" novalidate>
+        <div>
+          <label for="comment-author">Name</label>
+          <input id="comment-author" name="author" type="text" maxlength="80" placeholder="Your name" required>
+        </div>
+        <div>
+          <label for="comment-body">Comment</label>
+          <textarea id="comment-body" name="body" maxlength="2000" placeholder="Add to the discussion…" required></textarea>
+        </div>
+        <button class="btn btn-primary" type="submit">Post comment</button>
+        <p id="comment-msg" class="form-msg" role="status"></p>
+      </form>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-bottom">
+      <p>&copy; <span id="year">2026</span> Aadi&rsquo;s Digital Lab &middot; MIT License</p>
+      <p><a href="index.html">Back to the Lab &rarr;</a></p>
+    </div>
+  </footer>
+
+  <script src="js/main.js" defer></script>
+  <script src="js/post.js" defer></script>
+</body>
+</html>
