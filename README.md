@@ -146,3 +146,12 @@ writes are gated server-side.
 `.github/workflows/ci.yml` builds the Pages Functions with Wrangler,
 syntax-checks the frontend modules with esbuild, and lints `schema.sql`
 against real SQLite on every push.
+
+## Console page (`console.html`)
+
+Live GitHub telemetry for the Lab, no dependencies: repository stat cards,
+a 52-week SVG commit-activity chart, language mix bars, recent public
+activity, and a repository card grid — all from GitHub's public API
+(unauthenticated, rate-limited, with explicit paused/rate-limit states per
+section). Charts are hand-rolled SVG using the site's CSS variables, so
+they follow the dark/light theme automatically.

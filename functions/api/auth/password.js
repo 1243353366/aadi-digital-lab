@@ -25,12 +25,15 @@ export async function onRequestPost(context) {
 
   const salt = randomHex(16);
   const newHash = await pbkdf2Hex(next, salt);
-  await db
-    .prepare("UPDATE users SET password_hash = ?, salt = ? WHERE id = ?")
-    .bind(newHash, salt, user.id).run();
-
-  // Kill all other sessions for this user — they sign in again with the new password.
-  await db.prepare("DELETE FROM sessions WHERE user_id = ?").bind(user.id).run();
+  try {
+    await db
+      .prepare("UPDATE users SET password_hash = ?, salt = ? WHERE id = ?")
+      .bind(newHash, salt, user.id).run();
+    // Kill all other sessions for this user — they sign in again with the new password.
+    await db.prepare("DELETE FROM sessions WHERE user_id = ?").bind(user.id).run();
+  } catch (err) {
+    return json({ error: "Failed to update password" }, 500);
+  }
   return json({ ok: true }, 200, {
     "Set-Cookie": "adl_session=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0",
   });

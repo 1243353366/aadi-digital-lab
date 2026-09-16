@@ -3,24 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Post — Aadi's Digital Lab</title>
-  <meta name="description" content="A post from Aadi's Digital Lab — research, OSINT, AI, and systems thinking.">
+  <title>Console — Aadi's Digital Lab</title>
+  <meta name="description" content="Live telemetry for Aadi's Digital Lab: GitHub repository stats, commit activity, and public experiments.">
   <meta name="author" content="Aadi Shankar">
   <meta name="color-scheme" content="dark light">
   <meta name="theme-color" content="#0b1220">
 
-  <meta property="og:type" content="article">
+  <meta property="og:type" content="website">
   <meta property="og:site_name" content="Aadi's Digital Lab">
-  <meta property="og:title" content="Post — Aadi's Digital Lab">
-  <meta property="og:description" content="Research, OSINT, AI, and systems thinking.">
-  <meta property="og:url" content="https://aadi-digital-lab.pages.dev/post.html">
+  <meta property="og:title" content="Console — Aadi's Digital Lab">
+  <meta property="og:description" content="Live telemetry: repository stats, commit activity, and public experiments.">
+  <meta property="og:url" content="https://aadi-digital-lab.pages.dev/console.html">
   <meta property="og:image" content="https://aadi-digital-lab.pages.dev/favicon.svg">
 
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="Post — Aadi's Digital Lab">
-  <meta name="twitter:description" content="Research, OSINT, AI, and systems thinking.">
+  <meta name="twitter:title" content="Console — Aadi's Digital Lab">
+  <meta name="twitter:description" content="Live telemetry: repository stats, commit activity, and public experiments.">
 
-  <link rel="canonical" href="https://aadi-digital-lab.pages.dev/post.html">
+  <link rel="canonical" href="https://aadi-digital-lab.pages.dev/console.html">
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
 
   <script>
@@ -58,7 +58,7 @@
         <a href="index.html#research">Research &amp; OSINT</a>
         <a href="index.html#ai">AI Tools</a>
         <a href="blog.html">Blog</a>
-        <a href="console.html">Console</a>
+        <a href="console.html" aria-current="page">Console</a>
         <a href="index.html#contact">Contact</a>
       </nav>
 
@@ -82,49 +82,47 @@
   </header>
 
   <main id="main">
-    <article class="wrap post-page">
-      <p id="post-status" class="status-note">Loading post\u2026</p>
+    <div class="wrap page-head">
+      <h1>The Lab, measured.</h1>
+      <p>Live telemetry from the Lab&rsquo;s public GitHub — repositories, commit activity, and experiments, straight from the source. Powered by GitHub&rsquo;s public API.</p>
+    </div>
 
-      <div id="post-body" hidden>
-        <p><a class="post-back" href="blog.html">&larr; All posts</a></p>
-        <h1 id="post-title"></h1>
-        <p class="post-meta" id="post-date"></p>
-        <div id="post-tags" class="tag-cloud"></div>
-        <div id="post-content" class="post-content"></div>
+    <section class="wrap console-sec" aria-label="Repository statistics">
+      <p class="eyebrow">Repository</p>
+      <div id="repo-stats" class="stat-grid"><p class="status-note">Loading repository data&hellip;</p></div>
+    </section>
 
-        <button id="like-btn" class="btn btn-ghost like-btn" type="button" aria-pressed="false">
-          <span aria-hidden="true">&hearts;</span> <span id="like-count">0</span>
-          <span class="sr-only">likes — click to like</span>
-        </button>
+    <section class="wrap console-sec" aria-label="Commit activity">
+      <p class="eyebrow">Commit activity</p>
+      <div id="commit-chart"><p class="status-note">Loading commit history&hellip;</p></div>
+    </section>
 
-        <section class="comments-section" aria-label="Comments">
-          <h2>Comments</h2>
-          <div id="comments"></div>
-          <form id="comment-form" class="comment-form">
-            <div class="field">
-              <label for="c-author">Name</label>
-              <input id="c-author" name="author" type="text" maxlength="80" required placeholder="Your name">
-            </div>
-            <div class="field">
-              <label for="c-body">Comment</label>
-              <textarea id="c-body" name="body" rows="4" maxlength="2000" required placeholder="Add to the discussion&hellip;"></textarea>
-            </div>
-            <button class="btn btn-primary" type="submit">Post comment</button>
-            <p id="comment-msg" class="status-note" hidden></p>
-          </form>
-        </section>
-      </div>
-    </article>
+    <div class="wrap console-split">
+      <section class="console-sec" aria-label="Languages">
+        <p class="eyebrow">Languages</p>
+        <div id="lang-bars"><p class="status-note">Loading language mix&hellip;</p></div>
+      </section>
+      <section class="console-sec" aria-label="Recent activity">
+        <p class="eyebrow">Recent activity</p>
+        <div id="events"><p class="status-note">Loading activity&hellip;</p></div>
+      </section>
+    </div>
+
+    <section class="wrap console-sec" aria-label="Public repositories">
+      <p class="eyebrow">Public repositories</p>
+      <div id="repo-grid" class="repo-grid"><p class="status-note">Loading repositories&hellip;</p></div>
+      <p class="post-meta">Data from GitHub&rsquo;s public API — unauthenticated requests are rate-limited, so sections may pause occasionally.</p>
+    </section>
   </main>
 
   <footer class="footer">
     <div class="wrap footer-bottom">
       <p>&copy; <span id="year">2026</span> Aadi&rsquo;s Digital Lab &middot; MIT License</p>
-      <p><a href="blog.html">Back to the blog &rarr;</a></p>
+      <p><a href="index.html">Back to the Lab &rarr;</a></p>
     </div>
   </footer>
 
   <script src="js/main.js" defer></script>
-  <script type="module" src="js/post.js"></script>
+  <script type="module" src="js/console.js"></script>
 </body>
 </html>
