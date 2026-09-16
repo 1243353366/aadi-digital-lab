@@ -1,0 +1,15 @@
+{
+  "name": "aadi-digital-lab",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:create": "wrangler d1 create blog_db",
+    "db:schema": "wrangler d1 execute blog_db --file=schema.sql",
+    "db:remote-schema": "wrangler d1 execute blog_db --remote --file=schema.sql"
+  },
+  "devDependencies": {
+    "wrangler": "^3.0.0"
+  }
+}
