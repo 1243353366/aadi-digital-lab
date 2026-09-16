@@ -1,6 +1,6 @@
 name = "aadi-digital-lab"
 main = "src/index.js"
-compatibility_date = "2026-09-16"
+compatibility_date = "2026-05-01"
 
 [[d1_databases]]
 binding = "DB"
