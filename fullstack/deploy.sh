@@ -7,6 +7,13 @@ cd "$(dirname "$0")"
 
 [ -n "${CLOUDFLARE_API_TOKEN:-}" ] || { echo "✘ CLOUDFLARE_API_TOKEN not set"; exit 1; }
 
+# Resolve the account ID ourselves: wrangler calls /memberships otherwise,
+# which fails unless the token also has User Details:Read.
+export CLOUDFLARE_ACCOUNT_ID=$(curl -s -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+  https://api.cloudflare.com/client/v4/accounts | \
+  python3 -c "import sys,json; d=json.load(sys.stdin); print(d['result'][0]['id'])")
+[ -n "${CLOUDFLARE_ACCOUNT_ID:-}" ] || { echo "✘ Could not resolve Cloudflare account"; exit 1; }
+
 echo "==> 1/5 Verifying token has account access"
 ACC=$(curl -s -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
   https://api.cloudflare.com/client/v4/accounts | \
@@ -22,7 +29,7 @@ fi
 echo "==> 2/5 Checking remote blog_db for a legacy schema"
 STATE=$(npx -y wrangler@4 d1 execute blog_db --remote --json --command \
   "SELECT name FROM sqlite_master WHERE type='table'" 2>/dev/null | \
-  python3 -c "import sys,json; d=json.load(sys.stdin); names=[r['name'] for r in d['result']]; print('legacy' if names and 'sessions' not in names else 'clean')")
+  python3 -c "import sys,json; d=json.load(sys.stdin); rows=d[0]['results'] if isinstance(d,list) else d['result']; names=[r['name'] for r in rows]; print('legacy' if names and 'sessions' not in names else 'clean')")
 if [ "$STATE" = "legacy" ]; then
   echo "    Legacy schema found — resetting blog_db (seed content only, safe to reset)"
   npx -y wrangler@4 d1 execute blog_db --remote --command \
