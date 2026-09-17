@@ -7,8 +7,8 @@ const GH_REPO = "aadi-digital-lab";
 
 const $ = (id) => document.getElementById(id);
 
-async function gh(url) {
-  const res = await fetch(url, { headers: { Accept: "application/vnd.github+json" } });
+async function gh(path) {
+  const res = await fetch("https://api.github.com" + path, { headers: { Accept: "application/vnd.github+json" } });
   if (!res.ok) throw new Error(`GitHub API ${res.status}`);
   return res.json();
 }

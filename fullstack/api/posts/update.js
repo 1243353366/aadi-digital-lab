@@ -1,4 +1,4 @@
-import { json, requireAdmin } from "../_shared.js";
+import { json, requireAdmin, audit } from "../_shared.js";
 import { slugify, replaceTags, validatePostBody } from "./create.js";
 
 export async function onRequestPost(context) {
@@ -35,6 +35,7 @@ export async function onRequestPost(context) {
       "UPDATE posts SET title = ?, slug = ?, content = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?"
     ).bind(v.title, slug, v.content, id).run();
     await replaceTags(db, id, v.tags);
+    await audit(db, user.username, "update_post", slug);
     return json({ id, slug }, 200);
   } catch {
     return json({ error: "Failed to update post" }, 500);

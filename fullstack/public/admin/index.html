@@ -10,17 +10,7 @@
   <meta name="theme-color" content="#0b1220">
   <link rel="icon" type="image/svg+xml" href="../favicon.svg">
 
-  <script>
-    (function () {
-      var t = "dark";
-      try {
-        t = localStorage.getItem("adl-theme") ||
-            (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
-      } catch (e) {}
-      document.documentElement.setAttribute("data-theme", t);
-      document.documentElement.classList.add("js");
-    })();
-  </script>
+  <script src="../js/theme-init.js"></script>
 
   <link rel="stylesheet" href="../css/styles.css">
 </head>

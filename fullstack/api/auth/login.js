@@ -1,4 +1,4 @@
-import { json, pbkdf2Hex, randomHex, sha256Hex, SESSION_COOKIE, SESSION_TTL_SECONDS } from "../_shared.js";
+import { json, pbkdf2Hex, randomHex, sha256Hex, SESSION_COOKIE, SESSION_TTL_SECONDS, rateLimit } from "../_shared.js";
 
 export async function onRequestPost(context) {
   const db = context.env.DB;
@@ -15,20 +15,10 @@ export async function onRequestPost(context) {
   const password = String(body.password || "");
   if (!username || !password) return json({ error: "Username and password are required" }, 400);
 
-  // Minimal brute-force protection: max 8 login attempts per IP per 15 minutes.
-  const ip = context.request.headers.get("CF-Connecting-IP") || "unknown";
-  const windowStart = new Date(Date.now() - 15 * 60 * 1000).toISOString();
-  const recent = await db
-    .prepare("SELECT COUNT(*) AS n FROM login_attempts WHERE ip = ? AND created_at > ?")
-    .bind(ip, windowStart).first();
-  const now = new Date();
-  await db.batch([
-    db.prepare("INSERT INTO login_attempts (ip, created_at) VALUES (?, ?)")
-      .bind(ip, now.toISOString()),
-    db.prepare("DELETE FROM login_attempts WHERE created_at < ?")
-      .bind(new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()),
-  ]);
-  if (recent.n >= 8) return json({ error: "Too many attempts. Try again in a few minutes." }, 429);
+  // Brute-force protection: max 8 login attempts per IP per 15 minutes.
+  if (!(await rateLimit(db, context.request, "login", 8))) {
+    return json({ error: "Too many attempts. Try again in a few minutes." }, 429);
+  }
 
   const user = await db
     .prepare("SELECT id, username, role, password_hash, salt FROM users WHERE username = ?")

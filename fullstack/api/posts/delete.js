@@ -1,4 +1,4 @@
-import { json, requireAdmin } from "../_shared.js";
+import { json, requireAdmin, audit } from "../_shared.js";
 
 export async function onRequestPost(context) {
   const db = context.env.DB;
@@ -27,6 +27,7 @@ export async function onRequestPost(context) {
       db.prepare("DELETE FROM likes WHERE post_id = ?").bind(id),
       db.prepare("DELETE FROM posts WHERE id = ?").bind(id),
     ]);
+    await audit(db, user.username, "delete_post", "id " + id);
     return json({ ok: true });
   } catch {
     return json({ error: "Failed to delete post" }, 500);

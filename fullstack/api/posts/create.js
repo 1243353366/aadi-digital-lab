@@ -1,4 +1,4 @@
-import { json, requireAdmin } from "../_shared.js";
+import { json, requireAdmin, audit } from "../_shared.js";
 
 export function slugify(text) {
   return String(text).toLowerCase().trim()
@@ -69,6 +69,7 @@ export async function onRequestPost(context) {
 
     const postId = result.meta.last_row_id;
     await saveTags(db, postId, v.tags);
+    await audit(db, user.username, "create_post", v.slug);
     return json({ id: postId, slug: v.slug }, 201);
   } catch (err) {
     return json({ error: "Failed to create post" }, 500);

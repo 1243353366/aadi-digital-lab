@@ -15,10 +15,13 @@ import * as postLike from "../api/post/[slug]/like.js";
 import * as postCreate from "../api/posts/create.js";
 import * as postUpdate from "../api/posts/update.js";
 import * as postDelete from "../api/posts/delete.js";
+import { SEC_HEADERS } from "../api/_shared.js";
 
 const ctx = (request, env, params) => ({ request, env, params: params || {} });
+const JSON_TYPE = { "Content-Type": "application/json; charset=utf-8", ...SEC_HEADERS };
 const notAllowed = () => new Response(JSON.stringify({ error: "Method not allowed" }),
-  { status: 405, headers: { "Content-Type": "application/json; charset=utf-8" } });
+  { status: 405, headers: JSON_TYPE });
+const MAX_BODY_BYTES = 32 * 1024; // generous: comments cap at 2000 chars
 
 export default {
   async fetch(request, env) {
@@ -31,13 +34,16 @@ export default {
       // is an unmatched route — serve the site's 404 page with a 404 status.
       if (env.ASSETS) {
         const nf = await env.ASSETS.fetch(new Request(new URL("/404.html", request.url), request));
-        if (nf.status === 200) return new Response(nf.body, { status: 404, headers: nf.headers });
+        if (nf.status === 200) return new Response(nf.body, { status: 404, headers: { ...Object.fromEntries(nf.headers), ...SEC_HEADERS } });
       }
       return new Response("Not found", { status: 404 });
     }
 
     try {
-      if (path === "/api/posts") {
+      if (request.method === "POST" && Number(request.headers.get("Content-Length") || 0) > MAX_BODY_BYTES) {
+      return new Response(JSON.stringify({ error: "Payload too large" }), { status: 413, headers: JSON_TYPE });
+    }
+    if (path === "/api/posts") {
         if (method !== "GET") return notAllowed();
         return postsList.onRequestGet(ctx(request, env));
       }
@@ -74,10 +80,10 @@ export default {
       }
 
       return new Response(JSON.stringify({ error: "Not found" }),
-        { status: 404, headers: { "Content-Type": "application/json; charset=utf-8" } });
+        { status: 404, headers: JSON_TYPE });
     } catch (err) {
       return new Response(JSON.stringify({ error: "Internal error" }),
-        { status: 500, headers: { "Content-Type": "application/json; charset=utf-8" } });
+        { status: 500, headers: JSON_TYPE });
     }
   },
 };

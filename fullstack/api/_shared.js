@@ -1,11 +1,44 @@
 // Shared helpers for all Pages Functions. The underscore prefix keeps
 // this file out of the routing table.
 
+export const SEC_HEADERS = {
+  "X-Content-Type-Options": "nosniff",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "X-Frame-Options": "DENY",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+  "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; connect-src 'self' https://api.github.com; frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'",
+};
+
 export function json(data, status = 200, headers = {}) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { "Content-Type": "application/json; charset=utf-8", ...headers },
+    headers: { "Content-Type": "application/json; charset=utf-8", ...SEC_HEADERS, ...headers },
   });
+}
+
+// Minimal D1-backed rate limiter: max requests per IP per window for an endpoint.
+// Returns true when the request is allowed.
+export async function rateLimit(db, request, endpoint, max = 10, windowMs = 15 * 60 * 1000) {
+  const ip = request.headers.get("CF-Connecting-IP") || "unknown";
+  const now = new Date();
+  const recent = await db
+    .prepare("SELECT COUNT(*) AS n FROM rate_limits WHERE ip = ? AND endpoint = ? AND created_at > ?")
+    .bind(ip, endpoint, new Date(now.getTime() - windowMs).toISOString()).first();
+  await db.batch([
+    db.prepare("INSERT INTO rate_limits (ip, endpoint, created_at) VALUES (?, ?, ?)")
+      .bind(ip, endpoint, now.toISOString()),
+    db.prepare("DELETE FROM rate_limits WHERE created_at < ?")
+      .bind(new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString()),
+  ]);
+  return recent.n < max;
+}
+
+// Append-only audit trail for administrative changes. Never throws.
+export async function audit(db, username, action, detail = "") {
+  try {
+    await db.prepare("INSERT INTO audit_log (username, action, detail) VALUES (?, ?, ?)")
+      .bind(username, action, String(detail).slice(0, 200)).run();
+  } catch {}
 }
 
 export function bytesToHex(bytes) {

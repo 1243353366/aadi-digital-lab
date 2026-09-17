@@ -1,6 +1,6 @@
 /* Admin dashboard: hash-router SPA over the JSON API.
    Routes: #/posts (default) · #/new · #/edit/:slug · #/settings */
-import { esc, fmtDate, useAuth, useLogout, usePosts, usePost, useCreatePost, useUpdatePost, useDeletePost, changePassword } from "../api.js";
+import { esc, fmtDate, useAuth, useLogout, usePosts, usePost, useCreatePost, useUpdatePost, useDeletePost, changePassword } from "./api.js";
 
 const view = document.getElementById("view");
 const navLinks = document.querySelectorAll(".admin-links a[data-route]");

@@ -38,6 +38,7 @@ fi
 
 echo "==> 3/5 Applying schema.sql to remote blog_db"
 npx -y wrangler@4 d1 execute blog_db --remote --file=schema.sql
+npx -y wrangler@4 d1 execute blog_db --remote --command "DROP TABLE IF EXISTS login_attempts;" >/dev/null 2>&1 || true
 
 echo "==> 4/5 Deploying Worker"
 DEPLOY_OUT=$(npx -y wrangler@4 deploy 2>&1)

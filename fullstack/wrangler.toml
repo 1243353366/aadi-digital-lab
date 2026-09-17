@@ -2,6 +2,9 @@ name = "aadi-digital-lab-fullstack"
 main = "src/index.js"
 compatibility_date = "2026-05-01"
 
+[observability]
+enabled = true
+
 [assets]
 directory = "./public"
 binding = "ASSETS"

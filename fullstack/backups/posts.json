@@ -1,0 +1,40 @@
+[
+ {
+  "meta": {
+   "changed_db": false,
+   "changes": 0,
+   "duration": 0.3735,
+   "last_row_id": 0,
+   "rows_read": 2,
+   "rows_written": 0,
+   "served_by": "v3-prod",
+   "served_by_colo": "SJC",
+   "served_by_primary": true,
+   "served_by_region": "WNAM",
+   "size_after": 94208,
+   "timings": {
+    "sql_duration_ms": 0.3735
+   },
+   "total_attempts": 1
+  },
+  "results": [
+   {
+    "content": "Welcome to Aadi's Digital Lab \u2014 the public notebook for research, OSINT, and systems thinking.\n\nThis site is a real app now: it runs on Cloudflare Pages with a D1 SQLite backend. Posts, comments, tags, search, and likes all live in the database; the admin dashboard at /admin manages everything.\n\nThe Lab tagline is the working method: Research, OSINT, AI, and Systems Thinking. Expect field notes, tool writeups, and experiments \u2014 documented well enough to reproduce.",
+    "created_at": "2026-09-16 21:23:07",
+    "id": 1,
+    "slug": "hello-from-the-lab",
+    "title": "Hello from the Lab",
+    "updated_at": "2026-09-16 21:23:07"
+   },
+   {
+    "content": "Most OSINT failures are process failures, not tool failures. Before any collection starts, three questions get answered in writing: what decision does this research support, what would change that decision, and what sources would be good enough.\n\nThen, and only then, tooling. Pinned queries, archived copies of everything, provenance recorded at capture time \u2014 not reconstructed later.\n\nThis post is the seed entry for the research tag. The full checklist writeup is coming.",
+    "created_at": "2026-09-16 21:23:07",
+    "id": 2,
+    "slug": "the-osint-checklist-i-actually-use",
+    "title": "The OSINT checklist I actually use",
+    "updated_at": "2026-09-16 21:23:07"
+   }
+  ],
+  "success": true
+ }
+]

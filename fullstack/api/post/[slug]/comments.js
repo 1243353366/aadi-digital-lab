@@ -1,4 +1,4 @@
-import { json, getUserFromRequest } from "../../_shared.js";
+import { json, getUserFromRequest, rateLimit } from "../../_shared.js";
 
 export async function onRequestGet(context) {
   const db = context.env.DB;
@@ -31,6 +31,11 @@ export async function onRequestPost(context) {
   const comment = String(body.body || "").trim();
   if (author.length < 1 || author.length > 80) return json({ error: "Name must be 1-80 characters" }, 400);
   if (comment.length < 1 || comment.length > 2000) return json({ error: "Comment must be 1-2000 characters" }, 400);
+
+  // Spam control: max 5 comments per IP per 15 minutes.
+  if (!(await rateLimit(db, context.request, "comment", 5))) {
+    return json({ error: "Too many comments from this address. Try again in a few minutes." }, 429);
+  }
 
   try {
     const post = await db.prepare("SELECT id FROM posts WHERE slug = ?").bind(context.params.slug).first();

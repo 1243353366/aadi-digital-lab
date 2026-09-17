@@ -1,4 +1,4 @@
-import { json } from "../../_shared.js";
+import { json, rateLimit } from "../../_shared.js";
 
 // GET /api/post/:slug/like → { count }
 export async function onRequestGet(context) {
@@ -28,6 +28,11 @@ export async function onRequestPost(context) {
 
   const visitor = String(body.visitor || "").trim();
   if (!/^[A-Za-z0-9-]{8,64}$/.test(visitor)) return json({ error: "Invalid visitor id" }, 400);
+
+  // Flood control: max 30 like toggles per IP per 15 minutes.
+  if (!(await rateLimit(db, context.request, "like", 30))) {
+    return json({ error: "Too many requests. Slow down a little." }, 429);
+  }
 
   try {
     const post = await db.prepare("SELECT id FROM posts WHERE slug = ?").bind(context.params.slug).first();

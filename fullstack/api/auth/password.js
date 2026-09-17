@@ -1,4 +1,4 @@
-import { json, pbkdf2Hex, randomHex, requireUser } from "../_shared.js";
+import { json, pbkdf2Hex, randomHex, requireUser , audit } from "../_shared.js";
 
 export async function onRequestPost(context) {
   const db = context.env.DB;
@@ -31,6 +31,7 @@ export async function onRequestPost(context) {
       .bind(newHash, salt, user.id).run();
     // Kill all other sessions for this user — they sign in again with the new password.
     await db.prepare("DELETE FROM sessions WHERE user_id = ?").bind(user.id).run();
+    await audit(db, user.username, "password_change");
   } catch (err) {
     return json({ error: "Failed to update password" }, 500);
   }
