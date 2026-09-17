@@ -3,7 +3,7 @@
   "meta": {
    "changed_db": false,
    "changes": 0,
-   "duration": 0.3735,
+   "duration": 0.4046,
    "last_row_id": 0,
    "rows_read": 2,
    "rows_written": 0,
@@ -11,9 +11,9 @@
    "served_by_colo": "SJC",
    "served_by_primary": true,
    "served_by_region": "WNAM",
-   "size_after": 94208,
+   "size_after": 98304,
    "timings": {
-    "sql_duration_ms": 0.3735
+    "sql_duration_ms": 0.4046
    },
    "total_attempts": 1
   },
