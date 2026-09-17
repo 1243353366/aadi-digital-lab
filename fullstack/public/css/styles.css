@@ -752,3 +752,15 @@ html.js .reveal.visible { opacity: 1; transform: none; }
 /* ---------- 404 ---------- */
 .err-page { text-align: center; padding: 140px 0 160px; }
 .err-code { font-family: var(--font-mono); font-size: 4rem; color: var(--accent); margin: 0 0 8px; }
+
+/* Ask Corpora hook (console) */
+.corpora-ask { display: flex; gap: 10px; margin: 14px 0; flex-wrap: wrap; }
+.corpora-ask input[type="search"] {
+  flex: 1 1 260px; background: var(--bg-soft); color: var(--text);
+  border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; font: inherit;
+}
+.corpora-ask input[type="search"]:focus { border-color: var(--accent); outline: none; }
+.corpora-hit { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-top: 10px; }
+.corpora-hit .hit-title { font-weight: 600; margin: 0 0 4px; }
+.corpora-hit .hit-meta { font-size: 0.8rem; color: var(--muted); margin: 0 0 8px; }
+.corpora-hit .hit-body { font-size: 0.95rem; margin: 0; }

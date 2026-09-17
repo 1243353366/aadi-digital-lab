@@ -15,6 +15,7 @@ import * as postLike from "../api/post/[slug]/like.js";
 import * as postCreate from "../api/posts/create.js";
 import * as postUpdate from "../api/posts/update.js";
 import * as postDelete from "../api/posts/delete.js";
+import * as corporaSearch from "../api/corpora.js";
 import { SEC_HEADERS } from "../api/_shared.js";
 
 const ctx = (request, env, params) => ({ request, env, params: params || {} });
@@ -46,6 +47,10 @@ export default {
     if (path === "/api/posts") {
         if (method !== "GET") return notAllowed();
         return postsList.onRequestGet(ctx(request, env));
+      }
+      if (path === "/api/corpora") {
+        if (method !== "GET") return notAllowed();
+        return corporaSearch.onRequestGet(ctx(request, env));
       }
       if (path === "/api/tags") {
         if (method !== "GET") return notAllowed();

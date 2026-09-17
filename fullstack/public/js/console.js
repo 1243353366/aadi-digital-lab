@@ -192,6 +192,27 @@ async function loadEvents() {
   } catch { fail(el, "activity feed"); }
 }
 
+/* Ask Corpora — text-mine the lab's indexed corpora through the same-origin proxy. */
+async function askCorpora() {
+  const q = document.getElementById("corpora-q").value.trim();
+  const out = document.getElementById("corpora-results");
+  if (!q) { out.innerHTML = '<p class="status-note">Type a query first.</p>'; return; }
+  out.innerHTML = '<p class="status-note">Searching the indexed corpora&hellip;</p>';
+  try {
+    const res = await fetch("/api/corpora?q=" + encodeURIComponent(q));
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Search failed (" + res.status + ")");
+    out.innerHTML = data.count
+      ? data.results.map((r) =>
+          '<div class="corpora-hit"><p class="hit-title">' + esc(r.title) + "</p>" +
+          '<p class="hit-meta">' + esc(r.source) + " &middot; " + esc(String(r.created_at || "")) + "</p>" +
+          '<p class="hit-body">' + esc(r.snippet || "") + "</p></div>").join("")
+      : '<p class="status-note">No matches in the indexed corpora.</p>';
+  } catch (e) { out.innerHTML = '<p class="status-note">' + esc(e.message) + "</p>"; }
+}
+document.getElementById("corpora-btn").addEventListener("click", askCorpora);
+document.getElementById("corpora-q").addEventListener("keydown", (e) => { if (e.key === "Enter") askCorpora(); });
+
 loadRepoStats();
 loadCommitChart();
 loadRepos();

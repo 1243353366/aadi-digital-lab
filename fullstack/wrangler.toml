@@ -1,6 +1,10 @@
 name = "aadi-digital-lab-fullstack"
 main = "src/index.js"
 compatibility_date = "2026-05-01"
+# The Ask Corpora proxy fetches the corpora-ai worker, another Worker on this
+# same zone. Same-zone worker-to-worker fetch needs this flag to be treated
+# as a normal public fetch (Cloudflare error 1042 otherwise).
+compatibility_flags = ["global_fetch_strictly_public"]
 
 [observability]
 enabled = true

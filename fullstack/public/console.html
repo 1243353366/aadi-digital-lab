@@ -87,6 +87,16 @@
       <div id="commit-chart"><p class="status-note">Loading commit history&hellip;</p></div>
     </section>
 
+    <section class="wrap console-sec" aria-label="Ask Corpora">
+      <p class="eyebrow">Ask Corpora</p>
+      <p class="status-note">Text-mine the lab&rsquo;s indexed corpora &mdash; logs, research notes and repository metadata.</p>
+      <div class="corpora-ask">
+        <input type="search" id="corpora-q" maxlength="200" placeholder="e.g. osint checklist, deploy, telemetry" aria-label="Ask Corpora query">
+        <button id="corpora-btn" class="btn btn-primary" type="button">Search</button>
+      </div>
+      <div id="corpora-results" aria-live="polite"></div>
+    </section>
+
     <div class="wrap console-split">
       <section class="console-sec" aria-label="Languages">
         <p class="eyebrow">Languages</p>
