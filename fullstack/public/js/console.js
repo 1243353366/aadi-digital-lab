@@ -70,29 +70,46 @@ async function ghStatus(path) {
   return fetch("https://api.github.com" + path, { headers: { Accept: "application/vnd.github+json" } });
 }
 
+/* Fallback: aggregate per-week commits from the public events feed
+   (PushEvents carry payload.size = commits per push). Used when GitHub's
+   stats cache stays cold, which is common for young repositories. */
+function weeksFromEvents(events) {
+  const byWeek = new Map();
+  for (const e of events || []) {
+    if (e.type !== "PushEvent") continue;
+    const weekStart = Math.floor(new Date(e.created_at).getTime() / (7 * 24 * 3600 * 1000));
+    const n = (e.payload && (e.payload.size ?? (e.payload.commits || []).length)) || 1;
+    byWeek.set(weekStart, (byWeek.get(weekStart) || 0) + n);
+  }
+  return Array.from(byWeek.entries()).sort((a, b) => a[0] - b[0])
+    .map(([weekIdx, commits]) => ({ total: commits, week: weekIdx * 7 * 24 * 3600 }));
+}
+
 async function loadCommitChart() {
   const el = $("commit-chart");
   try {
     // /stats/commit-activity 404s persistently for this repo; /stats/contributors
-    // carries the same weekly commit counts and warms up reliably.
+    // carries the same weekly commit counts but answers 202 while aggregating.
     let res = await ghStatus(`/repos/${GH_USER}/${GH_REPO}/stats/contributors`);
-    for (let attempt = 0; attempt < 3 && (res.status === 202 || res.status === 404); attempt++) {
+    for (let attempt = 0; attempt < 2 && (res.status === 202 || res.status === 404); attempt++) {
       el.innerHTML = `<p class="status-note">GitHub is aggregating this repository's statistics&hellip;</p>`;
       await new Promise((r) => setTimeout(r, 3500));
       res = await ghStatus(`/repos/${GH_USER}/${GH_REPO}/stats/contributors`);
     }
-    if (res.status === 202 || res.status === 404) {
-      el.innerHTML = `<p class="status-note">GitHub is still aggregating commit statistics for this repository — check back in a few minutes.</p>`;
-      return;
+    let weeks = [];
+    if (res.ok) {
+      const contributors = await res.json();
+      const byWeek = new Map();
+      // GitHub answers 200 with a non-array body ({} or empty) while stats
+      // settle — only trust a real array, otherwise fall through to events.
+      if (Array.isArray(contributors)) {
+        for (const c of contributors) {
+          for (const w of c.weeks || []) byWeek.set(w.w, (byWeek.get(w.w) || 0) + (w.c || 0));
+        }
+        weeks = Array.from(byWeek.entries()).sort((a, b) => a[0] - b[0]).map(([week, commits]) => ({ total: commits, week }));
+      }
     }
-    if (!res.ok) { fail(el, "commit chart"); return; }
-    const contributors = await res.json();
-    // Aggregate commits per week across contributors into the { total } shape barChart expects.
-    const byWeek = new Map();
-    for (const c of contributors || []) {
-      for (const w of c.weeks || []) byWeek.set(w.w, (byWeek.get(w.w) || 0) + (w.c || 0));
-    }
-    const weeks = Array.from(byWeek.entries()).sort((a, b) => a[0] - b[0]).map(([week, commits]) => ({ total: commits, week }));
+    if (!weeks.length) weeks = weeksFromEvents(await gh(`/users/${GH_USER}/events/public?per_page=100`));
     if (!weeks.length) {
       el.innerHTML = `<p class="status-note">No commit activity recorded for this repository yet.</p>`;
       return;
