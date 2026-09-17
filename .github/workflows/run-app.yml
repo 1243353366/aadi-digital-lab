@@ -15,30 +15,22 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Boot the site + D1 (GitHub-hosted sandbox)
+      - name: Seed the local D1 database
+        run: npx -y wrangler@4 d1 execute blog_db --local --file=schema.sql
+        working-directory: fullstack
+
+      - name: Boot the Worker + D1 (GitHub-hosted sandbox)
         run: |
-          npx -y wrangler@4 pages dev . --port 8788 --d1 DB > server.log 2>&1 &
+          npx -y wrangler@4 dev --port 8788 > server.log 2>&1 &
           for i in $(seq 1 90); do
             curl -s -o /dev/null http://localhost:8788/ && break
             sleep 2
           done
           curl -s -o /dev/null -w "home page -> HTTP %{http_code}\n" http://localhost:8788/
-
-      - name: Seed the D1 database (target the D1 object, never other miniflare stores)
-        run: |
-          curl -s http://localhost:8788/api/posts > /dev/null || true
-          DB=$(find .wrangler/state -path "*miniflare-D1DatabaseObject*" -name "*.sqlite" ! -name "metadata.sqlite" | head -1)
-          if [ -z "$DB" ]; then echo "D1 database file not found"; exit 1; fi
-          echo "seeding: $DB"
-          sqlite3 "$DB" < schema.sql
-          sqlite3 "$DB" "SELECT COUNT(*) || ' posts, ' || (SELECT COUNT(*) FROM tags) || ' tags seeded' FROM posts;"
-          # verify through the RUNNING app, not just the file:
-          sleep 1
-          curl -s http://localhost:8788/api/tags | grep -q "osint" && echo "seed visible via API: OK"
+        working-directory: fullstack
 
       - name: Home page renders
-        run: |
-          curl -s http://localhost:8788/ | grep -q "Aadi" && echo "home renders: OK"
+        run: curl -s http://localhost:8788/ | grep -q "Aadi" && echo "home renders: OK"
 
       - name: Search test - "checklist" must return the OSINT post
         run: |
@@ -69,7 +61,11 @@ jobs:
           echo "unauthenticated /api/posts/create -> HTTP $CODE"
           [ "$CODE" = "401" ] && echo "auth gate: OK"
 
+      - name: Security headers test
+        run: |
+          curl -sI http://localhost:8788/ | grep -qi "content-security-policy" && echo "CSP header: OK"
+          curl -sI http://localhost:8788/api/posts | grep -qi "x-content-type-options" && echo "nosniff header: OK"
+
       - name: Server log tail
         if: always()
-        run: |
-          tail -15 server.log || true
+        run: tail -15 fullstack/server.log || true

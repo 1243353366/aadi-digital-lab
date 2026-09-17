@@ -16,14 +16,11 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Validate Cloudflare Pages Functions
-        run: npx -y wrangler@4 pages functions build --outdir .functions-dist
-
-      - name: Syntax-check frontend JS modules
-        run: npx -y esbuild js/*.js --outdir=.js-dist --format=esm
+      - name: Syntax-check all backend and frontend JS modules
+        run: npx -y esbuild fullstack/src/index.js $(find fullstack/api fullstack/public/js -name '*.js') --outdir=.js-dist --format=esm
 
       - name: Lint the D1 schema with SQLite
         run: |
-          sudo apt-get install -y -q sqlite3
-          sqlite3 /tmp/check.db < schema.sql
+          sudo apt-get install -y -q sqlite3 >/dev/null
+          sqlite3 /tmp/check.db < fullstack/schema.sql
           sqlite3 /tmp/check.db "SELECT COUNT(*) FROM posts; SELECT COUNT(*) FROM users;"
