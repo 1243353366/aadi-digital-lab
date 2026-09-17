@@ -48,6 +48,7 @@ export default {
         if (method !== "GET") return notAllowed();
         return postsList.onRequestGet(ctx(request, env));
       }
+      if (path === "/api/corpora/summarize" && method === "POST") return corporaSearch.onRequestPost(ctx(request, env));
       if (path === "/api/corpora") {
         if (method !== "GET") return notAllowed();
         return corporaSearch.onRequestGet(ctx(request, env));

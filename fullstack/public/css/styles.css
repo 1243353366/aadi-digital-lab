@@ -764,3 +764,10 @@ html.js .reveal.visible { opacity: 1; transform: none; }
 .corpora-hit .hit-title { font-weight: 600; margin: 0 0 4px; }
 .corpora-hit .hit-meta { font-size: 0.8rem; color: var(--muted); margin: 0 0 8px; }
 .corpora-hit .hit-body { font-size: 0.95rem; margin: 0; }
+
+/* Brief summary digest card */
+.corpora-digest { background: var(--accent-soft); border: 1px solid var(--accent); border-radius: 10px; padding: 14px 16px; margin-top: 10px; }
+.corpora-digest .digest-lbl { font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--accent-strong); margin: 0 0 8px; }
+.corpora-digest p { margin: 0 0 8px; }
+.corpora-digest p:last-child { margin: 0; }
+.corpora-digest .digest-topics { font-size: 0.85rem; color: var(--muted); }

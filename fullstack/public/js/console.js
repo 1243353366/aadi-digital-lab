@@ -210,7 +210,28 @@ async function askCorpora() {
       : '<p class="status-note">No matches in the indexed corpora.</p>';
   } catch (e) { out.innerHTML = '<p class="status-note">' + esc(e.message) + "</p>"; }
 }
+/* Brief summary — one AI-written paragraph instead of the full record dump. */
+async function corporaSummary() {
+  const q = document.getElementById("corpora-q").value.trim();
+  const out = document.getElementById("corpora-results");
+  if (!q) { out.innerHTML = '<p class="status-note">Type a query first.</p>'; return; }
+  out.innerHTML = '<p class="status-note">Writing a brief summary&hellip;</p>';
+  try {
+    const res = await fetch("/api/corpora/summarize", {
+      method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ q })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Summary failed (" + res.status + ")");
+    if (!data.summary) { out.innerHTML = '<p class="status-note">No matches in the indexed corpora.</p>'; return; }
+    out.innerHTML = '<div class="corpora-digest">' +
+      '<p class="digest-lbl">Brief summary &mdash; ' + data.count + ' record' + (data.count === 1 ? "" : "s") + " matched</p>" +
+      "<p>" + esc(data.summary) + "</p>" +
+      (data.topics && data.topics.length ? '<p class="digest-topics">' + data.topics.map((t) => esc(t)).join(" &middot; ") + "</p>" : "") +
+      '<p class="status-note">Hit Search for the full records.</p></div>';
+  } catch (e) { out.innerHTML = '<p class="status-note">' + esc(e.message) + "</p>"; }
+}
 document.getElementById("corpora-btn").addEventListener("click", askCorpora);
+document.getElementById("corpora-summarize-btn").addEventListener("click", corporaSummary);
 document.getElementById("corpora-q").addEventListener("keydown", (e) => { if (e.key === "Enter") askCorpora(); });
 
 loadRepoStats();
