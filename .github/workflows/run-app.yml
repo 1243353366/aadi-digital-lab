@@ -30,7 +30,8 @@ jobs:
         working-directory: fullstack
 
       - name: Home page renders
-        run: curl -s http://localhost:8788/ | grep -q "Aadi" && echo "home renders: OK"
+        run: |
+          curl -s http://localhost:8788/ | grep -q "Aadi" && echo "home renders: OK"
 
       - name: Search test - "checklist" must return the OSINT post
         run: |

@@ -64,16 +64,41 @@ function barChart(weeks) {
   return `<svg viewBox="0 0 ${W} ${H}" class="chart" role="img" aria-label="Commits per week, last ${weeks.length} weeks">${grid}${bars}${labels}</svg>`;
 }
 
+/* GitHub's stats endpoints answer 202 while aggregating and 404 when the
+   cache is cold — both are "not ready yet", not errors. Retry briefly. */
+async function ghStatus(path) {
+  return fetch("https://api.github.com" + path, { headers: { Accept: "application/vnd.github+json" } });
+}
+
 async function loadCommitChart() {
   const el = $("commit-chart");
   try {
-    const weeks = await gh(`/repos/${GH_USER}/${GH_REPO}/stats/commit-activity`);
-    if (!Array.isArray(weeks) || !weeks.length) {
-      el.innerHTML = `<p class="status-note">GitHub is still computing statistics for this repository — check back in a minute.</p>`;
+    // /stats/commit-activity 404s persistently for this repo; /stats/contributors
+    // carries the same weekly commit counts and warms up reliably.
+    let res = await ghStatus(`/repos/${GH_USER}/${GH_REPO}/stats/contributors`);
+    for (let attempt = 0; attempt < 3 && (res.status === 202 || res.status === 404); attempt++) {
+      el.innerHTML = `<p class="status-note">GitHub is aggregating this repository's statistics&hellip;</p>`;
+      await new Promise((r) => setTimeout(r, 3500));
+      res = await ghStatus(`/repos/${GH_USER}/${GH_REPO}/stats/contributors`);
+    }
+    if (res.status === 202 || res.status === 404) {
+      el.innerHTML = `<p class="status-note">GitHub is still aggregating commit statistics for this repository — check back in a few minutes.</p>`;
+      return;
+    }
+    if (!res.ok) { fail(el, "commit chart"); return; }
+    const contributors = await res.json();
+    // Aggregate commits per week across contributors into the { total } shape barChart expects.
+    const byWeek = new Map();
+    for (const c of contributors || []) {
+      for (const w of c.weeks || []) byWeek.set(w.w, (byWeek.get(w.w) || 0) + (w.c || 0));
+    }
+    const weeks = Array.from(byWeek.entries()).sort((a, b) => a[0] - b[0]).map(([week, commits]) => ({ total: commits, week }));
+    if (!weeks.length) {
+      el.innerHTML = `<p class="status-note">No commit activity recorded for this repository yet.</p>`;
       return;
     }
     const total = weeks.reduce((n, w) => n + (w.total || 0), 0);
-    el.innerHTML = `<p class="post-meta">${total} commits in the last ${weeks.length} weeks · peak ${Math.max(...weeks.map((w) => w.total || 0))}/week</p>` + barChart(weeks);
+    el.innerHTML = `<p class="post-meta">${total} commit${total === 1 ? "" : "s"} in the last ${weeks.length} week${weeks.length === 1 ? "" : "s"} · peak ${Math.max(...weeks.map((w) => w.total || 0))}/week</p>` + barChart(weeks);
   } catch { fail(el, "commit chart"); }
 }
 
