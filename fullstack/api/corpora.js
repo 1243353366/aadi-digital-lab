@@ -45,7 +45,7 @@ export async function onRequestPost(context) {
     if (!searchRes.ok || !search.ok) throw new Error("upstream");
     if (!search.count) return json({ ok: true, q, count: 0, summary: null, topics: [] });
     const text = search.results
-      .map((r) => r.title + " (" + r.source + "): " + (r.snippet || ""))
+      .map((r) => r.title + " (" + r.source + "): " + (r.content || r.snippet || ""))
       .join("\n\n").slice(0, 6000);
     const aiRes = await fetch(CORPORA_ORIGIN + "/api/analyze", {
       method: "POST",

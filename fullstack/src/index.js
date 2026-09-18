@@ -16,6 +16,8 @@ import * as postCreate from "../api/posts/create.js";
 import * as postUpdate from "../api/posts/update.js";
 import * as postDelete from "../api/posts/delete.js";
 import * as corporaSearch from "../api/corpora.js";
+import * as reasoningApi from "../api/reasoning.js";
+import * as evalApi from "../api/eval.js";
 import { SEC_HEADERS } from "../api/_shared.js";
 
 const ctx = (request, env, params) => ({ request, env, params: params || {} });
@@ -53,6 +55,12 @@ export default {
         if (method !== "GET") return notAllowed();
         return corporaSearch.onRequestGet(ctx(request, env));
       }
+      if (path === "/api/reasoning/info") {
+        if (method !== "GET") return notAllowed();
+        return reasoningApi.onRequestGet(ctx(request, env));
+      }
+      if (path === "/api/reasoning/ask" && method === "POST") return reasoningApi.onRequestPost(ctx(request, env));
+      if (path === "/api/eval/hardened" && method === "POST") return evalApi.onRequestPost(ctx(request, env));
       if (path === "/api/tags") {
         if (method !== "GET") return notAllowed();
         return tagsApi.onRequestGet(ctx(request, env));

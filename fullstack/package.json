@@ -1,0 +1,6 @@
+{
+  "name": "aadi-digital-lab-fullstack",
+  "private": true,
+  "description": "Aadi's Digital Lab - zero-dependency Cloudflare Worker",
+  "scripts": { "deploy": "wrangler deploy" }
+}
