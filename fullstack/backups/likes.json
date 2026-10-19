@@ -3,7 +3,7 @@
   "meta": {
    "changed_db": false,
    "changes": 0,
-   "duration": 0.3406,
+   "duration": 0.6035,
    "last_row_id": 0,
    "rows_read": 1,
    "rows_written": 0,
@@ -13,7 +13,7 @@
    "served_by_region": "WNAM",
    "size_after": 720896,
    "timings": {
-    "sql_duration_ms": 0.3406
+    "sql_duration_ms": 0.6035
    },
    "total_attempts": 1
   },
