@@ -1,5 +1,11 @@
 # Changelog — Aadi's Digital Lab
 
+## [Security branch] — 2026-10-28 — Safe local misuse restrictions
+
+Added a transparent, non-retaliatory launcher guard: existing-directory backup scope checks before and after consent, URL/UNC/link/reparse rejection, one advisory active slot per account/temp root, 1800-second default runtime with a 1–3600-second range, and `COMPASS_SCANNER_DISABLED=1` to refuse new work. Timeout/cancellation stops only the scanner child created by the wrapper and records incomplete coverage locally. Original scan verdicts are retained on completed runs. No telemetry, hostile commands, intent classification, permanent bans, recursive deletion, or remote probing is added. Unsupported/tampered state refuses work; it never grants permissions.
+
+Limitations and reproduction are in [safe safeguard documentation](scanner/ABUSE-DEFENSE.md). A device owner can bypass a local wrapper; POSIX mount locality, native Windows behavior, and wrapper-crash supervision are not certified. Synthetic tests demonstrate scope refusal, reversible concurrency, state preservation, consent, runtime bounds, and unchanged completed verdicts. `main` and hosting remain unchanged.
+
 ## [Security branch] — 2026-10-28 — Recovery, machine-state, and indicator trust
 
 Changes are isolated to `security/scanner-recovery-trust-boundaries`; `main` and hosting are not changed. Added ownership-bound non-recursive cleanup of current-process scanner copies, non-destructive reporting of stale candidates, bounded descriptor-aware browser snapshots, group-state change warnings, and read-only SQLite opens that cannot create vanished evidence. Partial acquisition records are retained on failure. No system rollback/remediation capability is introduced.

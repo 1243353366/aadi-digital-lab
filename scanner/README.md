@@ -12,6 +12,8 @@ This command launches a **real scan on the person's current live computer**, not
 
 The launcher shows its fixed read-only scope and requires the exact phrase `I AUTHORIZE THIS LOCAL SCAN` in an interactive terminal. After explicit consent, the scan starts without further workflow prompts. There is no `--yes` consent bypass or scheduled-scan enrollment. The person running it must own or be authorized to inspect the target.
 
+The [safe guard](ABUSE-DEFENSE.md) refuses unsupported targets and concurrent wrapper work; it never retaliates or guesses intent. Runtime defaults to 1800 seconds; `--max-runtime-seconds` accepts 1–3600. Set `COMPASS_SCANNER_DISABLED=1` before invocation to refuse new scans, or use Ctrl+C to stop your current scan. Timeout/cancellation returns incomplete coverage (exit 3), preserves existing evidence, and writes a local-only guard record. No telemetry, permanent bans, hidden commands, or network probing are introduced. These are wrapper controls, not protection against someone who controls the device, changes its temp root, or bypasses the launcher.
+
 To view the scope without reading device evidence:
 
 ```bash
@@ -38,7 +40,7 @@ Use `--json audit-report.json` to save a separate report in a new file outside t
 
 ## Local output and separate AI consent
 
-Reports and a versioned consent record are written under a new directory in the operating system's temporary folder: `compass-scans/<random-id>/`. The terminal prints its location. `full-report.json` may contain private paths, browser details, or message excerpts. The separate `sharing-summary.json` contains aggregate counts/status, without raw artifact content.
+Reports and a versioned consent record are written under a new private directory in the operating system's temporary folder: `compass-scans-<uid>/run-<random-id>/` on POSIX (or `compass-scans/run-<random-id>/` on Windows). The terminal prints its location. `full-report.json` may contain private paths, browser details, or message excerpts. The separate `sharing-summary.json` contains aggregate counts/status, without raw artifact content. Review `guard-events.json` and the exit code before sharing: stopped work has incomplete coverage even if a partial scanner report already exists. The guard does not change original findings or claim that timed-out targets are safe/malicious.
 
 Nothing is uploaded. Running the scanner does not authorize an AI agent to inspect the device or process the result. Review the minimal summary before selecting it in Compass. The website reads it locally and requires separate security-purpose consent plus authenticated administrator permission before submitting only allowlisted aggregate fields for bounded Agent/Director review. Summary review does not grant model-training or host/tool access.
 

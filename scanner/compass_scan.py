@@ -14,9 +14,11 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
-import uuid
 
 ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT))
+from local_guard import (DEFAULT_RUNTIME_SECONDS, MAX_RUNTIME_SECONDS, GuardDenied,
+                         SingleScan, require_enabled, validate_backup, recheck_backup)
 VENDOR = ROOT / "vendor" / "zero-breach"
 COMMIT = "fd39f351dfa0f611be8f7f8b3ac7f189a1f18ada"
 PATCH_ID = "compass-scanner-security-2026-10-28-v1"
@@ -54,18 +56,28 @@ def main(argv=None) -> int:
     parser.add_argument("--preview", action="store_true", help="show the fixed scope without scanning")
     parser.add_argument("--backup", type=Path, help="an existing local AndroidQF collection or iPhone backup, instead of this computer")
     parser.add_argument("--encrypted-backup", action="store_true", help="ask privately for the selected iPhone backup password")
+    parser.add_argument("--max-runtime-seconds", type=int, default=DEFAULT_RUNTIME_SECONDS,
+                        help="stop only this scanner process after 1–3600 seconds (default 1800)")
     args = parser.parse_args(argv)
+    if not 1 <= args.max_runtime_seconds <= MAX_RUNTIME_SECONDS:
+        parser.error("--max-runtime-seconds must be between 1 and 3600")
     if sys.version_info < (3, 10):
         print("Python 3.10 or newer is required.", file=sys.stderr)
         return 1
     if args.encrypted_backup and not args.backup:
         parser.error("--encrypted-backup requires --backup")
     try:
+        require_enabled()
         verify_source()
     except (OSError, ValueError, KeyError) as error:
         print("Source verification failed: " + str(error), file=sys.stderr)
         return 1
-    target = str(args.backup.expanduser().resolve()) if args.backup else "this computer's standard supported locations"
+    try:
+        backup, backup_identity = validate_backup(args.backup) if args.backup else (None, None)
+    except (OSError, ValueError) as error:
+        print("Scope refused: " + str(error) + ". No scan started.", file=sys.stderr)
+        return 1
+    target = str(backup) if backup else "this computer's standard supported locations"
     print("\nCOMPASS LOCAL SCAN — ZERO-BREACH-TOOLKIT")
     print("Upstream source: " + COMMIT + "; local security patch: " + PATCH_ID)
     print("Target: " + target)
@@ -76,6 +88,8 @@ def main(argv=None) -> int:
     print("Reports may contain private paths, browser details, or message excerpts. Keep them local.")
     print("A clean result is NOT a clean bill of health. Coverage gaps will be reported.")
     print("The scanner is not an operating-system sandbox. Use OS isolation for strict offline use.")
+    print("Safe guard: one active scan per local account/temp root; runtime cap " + str(args.max_runtime_seconds) + " seconds.")
+    print("Violations stop our work only. No retaliation, telemetry, or intent classification.")
     if args.preview:
         print("Preview only. No device evidence was read or scan performed.")
         return 0
@@ -87,28 +101,52 @@ def main(argv=None) -> int:
     if input("Type " + CONSENT_PHRASE + " to proceed, or press Enter to cancel: ").strip() != CONSENT_PHRASE:
         print("Cancelled. No scan started.")
         return 0
-    os.umask(0o077)
-    output = Path(tempfile.gettempdir()) / "compass-scans" / uuid.uuid4().hex
-    output.mkdir(parents=True, exist_ok=False)
-    record = {"consentVersion": CONSENT_VERSION, "timestampUtc": dt.datetime.now(dt.timezone.utc).isoformat(), "target": target, "purposes": ["local-read-only-spyware-indicator-check"], "upstreamCommit": COMMIT, "localSecurityPatch": PATCH_ID, "uploadAuthorized": False, "aiProcessingAuthorized": False}
-    (output / "consent.json").write_text(json.dumps(record, indent=2), encoding="utf-8")
-    # A fresh per-run cache prefix plus -B avoids loading stale/unapproved .pyc
-    # files beside verified source; it neither deletes caches nor trusts them.
-    command = [sys.executable, "-I", "-B", "-X", "utf8", "-X", "pycache_prefix=" + str(output / "python-cache"), str(VENDOR / "scan" / "zero-breach-toolkit.py"), "--no-menu", "--no-banner", "--no-feeds", "--scan-type", "default", "--json", str(output / "full-report.json"), "--share-json", str(output / "sharing-summary.json")]
-    if args.backup:
-        command.extend(["--phone", target])
-    if args.encrypted_backup:
-        command.append("--backup-password")
-    print("\nRunning the fixed scan. Use Ctrl+C to stop. Local output: " + str(output))
+    previous_umask = os.umask(0o077)
     try:
-        completed = subprocess.run(command, cwd=VENDOR, shell=False)
-    except KeyboardInterrupt:
-        print("Stopped. Review the local output and temporary-data cleanup before sharing anything.")
+        require_enabled()
+        with SingleScan(tempfile.gettempdir()) as guard:
+            if backup:
+                recheck_backup(backup, backup_identity)
+            output = Path(tempfile.mkdtemp(prefix="run-", dir=guard.root))
+            guard.recheck()
+            record = {"consentVersion": CONSENT_VERSION, "timestampUtc": dt.datetime.now(dt.timezone.utc).isoformat(), "target": target, "purposes": ["local-read-only-spyware-indicator-check"], "upstreamCommit": COMMIT, "localSecurityPatch": PATCH_ID, "uploadAuthorized": False, "aiProcessingAuthorized": False}
+            (output / "consent.json").write_text(json.dumps(record, indent=2), encoding="utf-8")
+            # Fresh isolated bytecode location; never trust old package caches.
+            command = [sys.executable, "-I", "-B", "-X", "utf8", "-X", "pycache_prefix=" + str(output / "python-cache"), str(VENDOR / "scan" / "zero-breach-toolkit.py"), "--no-menu", "--no-banner", "--no-feeds", "--scan-type", "default", "--json", str(output / "full-report.json"), "--share-json", str(output / "sharing-summary.json")]
+            if backup:
+                command.extend(["--phone", target])
+            if args.encrypted_backup:
+                command.append("--backup-password")
+            print("\nRunning the fixed scan. Use Ctrl+C to stop. Local output: " + str(output))
+            require_enabled()
+            guard.recheck()
+            if backup:
+                recheck_backup(backup, backup_identity)
+            event = {"policyVersion": "compass-safe-local-guard-v1", "event": "started", "intentAssessment": "not-performed", "maxRuntimeSeconds": args.max_runtime_seconds, "telemetrySent": False}
+            event_file = output / "guard-events.json"
+            event_file.write_text(json.dumps(event, indent=2), encoding="utf-8")
+            try:
+                # run() only cancels/waits for the child it created on timeout.
+                completed = subprocess.run(command, cwd=VENDOR, shell=False,
+                                           timeout=args.max_runtime_seconds)
+            except (subprocess.TimeoutExpired, KeyboardInterrupt) as error:
+                event["event"] = "runtime-limit" if isinstance(error, subprocess.TimeoutExpired) else "operator-cancelled"
+                event["coverage"] = "incomplete"
+                event_file.write_text(json.dumps(event, indent=2), encoding="utf-8")
+                print("Stopped only this scanner's work. Coverage is incomplete. Preserve and review local output and possible private temporary copies.")
+                return 3
+            event["event"] = "finished"
+            event["scannerExitCode"] = completed.returncode
+            event_file.write_text(json.dumps(event, indent=2), encoding="utf-8")
+            print("\nReports stay on this device. No AI agent or website has received them.")
+            print("Review sharing-summary.json before separately authorizing any Compass review.")
+            print("Exit codes: 0=no actionable known matches; 2=investigate; 3=incomplete coverage; 1=error.")
+            return completed.returncode
+    except (OSError, ValueError) as error:
+        print("Safe guard refused further work: " + str(error), file=sys.stderr)
         return 1
-    print("\nReports stay on this device. No AI agent or website has received them.")
-    print("Review sharing-summary.json before separately authorizing any Compass review.")
-    print("Exit codes: 0=no actionable known matches; 2=investigate; 3=incomplete coverage; 1=error.")
-    return completed.returncode
+    finally:
+        os.umask(previous_umask)
 
 
 if __name__ == "__main__":
