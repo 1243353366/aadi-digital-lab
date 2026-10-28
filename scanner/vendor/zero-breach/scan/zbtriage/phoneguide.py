@@ -1,3 +1,4 @@
+# Modified downstream by Compass (2026-10-28): ownership and machine-state security boundaries.
 """Explicit Android acquisition, separate from offline scanning.
 
 Official AndroidQF v1.8.3 release assets, pinned to the publisher's SHA-256
@@ -332,14 +333,11 @@ def collect_android(destination, recipient_file=None):
         return folder, 0
     except (OSError, ValueError, RuntimeError, zipfile.BadZipFile, zlib.error, EOFError, KeyboardInterrupt) as exc:
         if extracted and work:
-            # Only remove the new analysis directory created by this invocation.
-            target, parent = os.path.abspath(extracted), os.path.abspath(work)
-            if (target != parent and os.path.commonpath((parent, target)) == parent
-                    and not path_problem(target)):
-                try:
-                    shutil.rmtree(target)
-                except OSError:
-                    print("Partial analysis files could not be removed: " + target, file=sys.stderr)
+            # Failure-state paths and extracted contents are not deletion grants.
+            # Keep partial evidence rather than recursively trusting a path that
+            # another process could have replaced after extraction began.
+            print("Partial analysis retained; verify ownership and active use before manual cleanup: "
+                  + os.path.abspath(extracted), file=sys.stderr)
         print("Acquisition stopped: " + str(exc), file=sys.stderr)
         if work:
             print("Original or partial acquisition retained; it may contain unencrypted private records: " + work, file=sys.stderr)

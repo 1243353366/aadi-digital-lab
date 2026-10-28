@@ -6,6 +6,7 @@ indicator data, scan verdicts, or the original scanner's output.
 """
 from __future__ import annotations
 import argparse
+import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -20,10 +21,17 @@ LIMIT = "Passing fixtures does not establish real-world false-positive/false-neg
 
 
 def trusted_module(name: str, file: Path):
+    relative = file.relative_to(compass_scan.VENDOR).as_posix()
+    expected = compass_scan.approved_manifest()["sha256"].get(relative)
+    source = file.read_bytes()
+    if expected is None or hashlib.sha256(source).hexdigest() != expected:
+        raise ValueError("Refusing unapproved audit module bytes")
     spec = importlib.util.spec_from_file_location(name, file)
     module = importlib.util.module_from_spec(spec)
     sys.modules[name] = module
-    spec.loader.exec_module(module)
+    # Compile the already-hashed immutable bytes, never loader.exec_module:
+    # cached .pyc files are not covered by the source approval manifest.
+    exec(compile(source, str(file), "exec"), module.__dict__)
     return module
 
 
@@ -108,7 +116,7 @@ def run_audit() -> dict:
         heuristic.add_lead(result.Lead("fixture", "synthetic", "non-verdict lead"))
         check("heuristic lead does not create a finding", "false-alarm-regression", lambda: heuristic.status == result.CLEAN and not heuristic.hits)
 
-    return {"auditType": "scanner-on-scanner-fixture-audit-v1", "targetCommit": compass_scan.COMMIT, "reference": REFERENCE, "passed": all(x["passed"] for x in checks), "checksRun": len(checks), "checks": checks, "deviceScanPerformed": False, "originalScannerModified": False, "originalScanResultsChanged": False, "limitation": LIMIT}
+    return {"auditType": "scanner-on-scanner-fixture-audit-v1", "targetCommit": compass_scan.COMMIT, "targetPatchId": compass_scan.PATCH_ID, "reference": REFERENCE, "passed": all(x["passed"] for x in checks), "checksRun": len(checks), "checks": checks, "deviceScanPerformed": False, "originalDetectionSemanticsModified": False, "originalScanResultsChanged": False, "limitation": LIMIT}
 
 
 def main(argv=None) -> int:

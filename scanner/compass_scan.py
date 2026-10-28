@@ -19,14 +19,24 @@ import uuid
 ROOT = Path(__file__).resolve().parent
 VENDOR = ROOT / "vendor" / "zero-breach"
 COMMIT = "fd39f351dfa0f611be8f7f8b3ac7f189a1f18ada"
+PATCH_ID = "compass-scanner-security-2026-10-28-v1"
+APPROVED_MANIFEST_SHA256 = "3e8b57ea460b319c2872197c2c52d224dd4fa7e183373464edd8593734d99b60"
 CONSENT_VERSION = "compass-local-scan-v1"
 CONSENT_PHRASE = "I AUTHORIZE THIS LOCAL SCAN"
 
 
-def verify_source() -> None:
-    manifest = json.loads((ROOT / "source-manifest.json").read_text(encoding="utf-8"))
-    if manifest.get("commit") != COMMIT:
+def approved_manifest() -> dict:
+    raw = (ROOT / "source-manifest.json").read_bytes()
+    if hashlib.sha256(raw).hexdigest() != APPROVED_MANIFEST_SHA256:
+        raise ValueError("Package manifest is not the one approved by this application release.")
+    manifest = json.loads(raw)
+    if manifest.get("commit") != COMMIT or manifest.get("patchId") != PATCH_ID:
         raise ValueError("The source pin does not match this launcher.")
+    return manifest
+
+
+def verify_source() -> None:
+    manifest = approved_manifest()
     for relative, expected in manifest["sha256"].items():
         file = VENDOR / relative
         if file.is_symlink() or not file.is_file() or not file.resolve().is_relative_to(VENDOR.resolve()):
@@ -34,8 +44,9 @@ def verify_source() -> None:
         actual = hashlib.sha256(file.read_bytes()).hexdigest()
         if actual != expected:
             raise ValueError("Pinned source checksum mismatch: " + relative)
-    # Checksums detect unintended changes against this manifest. They do not
-    # authenticate a manifest replaced together with the entire package.
+    # The application approval is outside mutable source/cache metadata. This
+    # is not a publisher signature, nor protection if the trusted launcher and
+    # its approval constant are themselves replaced. Use a trusted Git commit.
 
 
 def main(argv=None) -> int:
@@ -56,7 +67,7 @@ def main(argv=None) -> int:
         return 1
     target = str(args.backup.expanduser().resolve()) if args.backup else "this computer's standard supported locations"
     print("\nCOMPASS LOCAL SCAN — ZERO-BREACH-TOOLKIT")
-    print("Pinned source: " + COMMIT)
+    print("Upstream source: " + COMMIT + "; local security patch: " + PATCH_ID)
     print("Target: " + target)
     print("Scope: supported saved browser/app records, startup and readable host records,")
     print("and bounded candidate-file fingerprints; or the selected existing phone backup.")
@@ -79,9 +90,11 @@ def main(argv=None) -> int:
     os.umask(0o077)
     output = Path(tempfile.gettempdir()) / "compass-scans" / uuid.uuid4().hex
     output.mkdir(parents=True, exist_ok=False)
-    record = {"consentVersion": CONSENT_VERSION, "timestampUtc": dt.datetime.now(dt.timezone.utc).isoformat(), "target": target, "purposes": ["local-read-only-spyware-indicator-check"], "upstreamCommit": COMMIT, "uploadAuthorized": False, "aiProcessingAuthorized": False}
+    record = {"consentVersion": CONSENT_VERSION, "timestampUtc": dt.datetime.now(dt.timezone.utc).isoformat(), "target": target, "purposes": ["local-read-only-spyware-indicator-check"], "upstreamCommit": COMMIT, "localSecurityPatch": PATCH_ID, "uploadAuthorized": False, "aiProcessingAuthorized": False}
     (output / "consent.json").write_text(json.dumps(record, indent=2), encoding="utf-8")
-    command = [sys.executable, "-I", "-X", "utf8", str(VENDOR / "scan" / "zero-breach-toolkit.py"), "--no-menu", "--no-banner", "--no-feeds", "--scan-type", "default", "--json", str(output / "full-report.json"), "--share-json", str(output / "sharing-summary.json")]
+    # A fresh per-run cache prefix plus -B avoids loading stale/unapproved .pyc
+    # files beside verified source; it neither deletes caches nor trusts them.
+    command = [sys.executable, "-I", "-B", "-X", "utf8", "-X", "pycache_prefix=" + str(output / "python-cache"), str(VENDOR / "scan" / "zero-breach-toolkit.py"), "--no-menu", "--no-banner", "--no-feeds", "--scan-type", "default", "--json", str(output / "full-report.json"), "--share-json", str(output / "sharing-summary.json")]
     if args.backup:
         command.extend(["--phone", target])
     if args.encrypted_backup:

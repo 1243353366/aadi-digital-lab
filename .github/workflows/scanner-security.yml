@@ -1,0 +1,30 @@
+name: Scanner recovery and trust boundaries
+on:
+  push:
+    branches: [main, "security/**"]
+    paths: ["scanner/**", "scripts/package_scanner.py", ".github/workflows/scanner-security.yml"]
+  pull_request:
+    branches: [main]
+    paths: ["scanner/**", "scripts/package_scanner.py", ".github/workflows/scanner-security.yml"]
+permissions:
+  contents: read
+jobs:
+  synthetic-security-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ["3.10", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install pytest==8.4.2
+      - name: Consent, source integrity, and synthetic audit; no device scan
+        run: python -m unittest discover -s scanner/tests -v
+      - name: Synthetic ownership, race, and feed-authenticity regressions only
+        env:
+          PYTHONPATH: scanner/vendor/zero-breach/scan
+        run: python -m pytest -q scanner/security_tests
+      - name: Check package approval; no scans, uploads, or deployment
+        run: python scanner/compass_scan.py --preview

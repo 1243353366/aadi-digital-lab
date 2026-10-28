@@ -14,5 +14,7 @@ dist/
 # Python / managed preview metadata
 __pycache__/
 *.pyc
+.pytest_cache/
+.security-venv/
 .manus-logs/
 .project-config.json

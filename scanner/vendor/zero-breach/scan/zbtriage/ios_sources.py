@@ -1,3 +1,4 @@
+# Modified downstream by Compass (2026-10-28): ownership and machine-state security boundaries.
 """Bounded iOS evidence sources. Never write to an input or resolve its links.
 
 Backup file keys and artifact names come from the manifest. Filesystem and
@@ -20,6 +21,7 @@ import time
 
 from .backupcrypto import backup_cbc, backup_ios_keys, backup_ios_file_key
 from .localpaths import local_temp_dir, open_evidence_db, path_problem
+from .ownedtemp import OwnedSnapshot
 
 _IS_FILE_LIMIT = 256 * 1024 * 1024
 _IS_TOTAL_LIMIT = 1024 * 1024 * 1024
@@ -150,6 +152,7 @@ class IosEvidenceSource:
         self.gap, self.emit, self.read_file = gap, emit, read
         self.query, self.tables, self.unarchive = query, tables, unarchive
         self.tmp, self.connections, self.entries = None, [], []
+        self.temp_owner = None
         self.database_serial = 0
         self.index, self.keys, self.encrypted = None, {}, False
         self.total, self.provenance, self.cached = 0, {}, {}
@@ -164,7 +167,8 @@ class IosEvidenceSource:
     def start(self):
         if path_problem(self.root):
             raise ValueError("refused iPhone evidence root")
-        self.tmp = tempfile.mkdtemp(prefix="zbt_ios_", dir=local_temp_dir())
+        self.temp_owner = OwnedSnapshot(prefix="zbt_ios_")
+        self.tmp = self.temp_owner.path
         if self.kind == "backup":
             try:
                 manifest = _is_plist(self.read_file(os.path.join(self.root, "Manifest.plist"), 4 * 1024 * 1024))
@@ -363,7 +367,7 @@ class IosEvidenceSource:
                             self.total += len(raw)
                             key = ("", name)
                             dest = os.path.join(self.tmp, "member-" + str(n))
-                            with open(dest, "xb") as fh:
+                            with os.fdopen(self.temp_owner.create_file(os.path.basename(dest)), "wb") as fh:
                                 fh.write(raw)
                             self.cached[key] = dest
                             self._remember(key, self.root, raw, name)
@@ -455,15 +459,15 @@ class IosEvidenceSource:
         # partial copy must not prevent a later artifact from being opened.
         dest = os.path.join(self.tmp, "db-" + str(self.database_serial))
         self.database_serial += 1
-        with open(dest, "xb") as fh:
+        with os.fdopen(self.temp_owner.create_file(os.path.basename(dest)), "wb") as fh:
             fh.write(raw)
         prefix, issues = _is_wal_prefix(wal, raw)
         for issue in issues:
             self.gap(check, issue + "; only earlier validated committed data can be read")
         if prefix:
-            with open(dest + "-wal", "xb") as fh:
+            with os.fdopen(self.temp_owner.create_file(os.path.basename(dest) + "-wal"), "wb") as fh:
                 fh.write(prefix)
-        con = open_evidence_db(dest)
+        con = open_evidence_db(dest, require_owned=True)
         self.connections.append(con)
         return con
 
@@ -474,11 +478,8 @@ class IosEvidenceSource:
                 con.close()
             except sqlite3.Error:
                 pass
-        if self.tmp:
-            try:
-                shutil.rmtree(self.tmp)
-            except OSError:
-                self.gap("ios:input", "temporary plaintext cleanup failed; private records may remain in the local temporary directory")
+        if self.tmp and (self.temp_owner is None or not self.temp_owner.cleanup()):
+            self.gap("ios:input", "temporary plaintext cleanup refused or failed; private records may remain in " + self.tmp)
 
 
 def _is_archive_candidate(name):

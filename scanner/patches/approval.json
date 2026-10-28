@@ -1,0 +1,7 @@
+{
+  "patchId": "compass-scanner-security-2026-10-28-v1",
+  "upstreamCommit": "fd39f351dfa0f611be8f7f8b3ac7f189a1f18ada",
+  "sha256": "e2815bc474fc709eb4a183df653a070955280f1eb2c894bcf97d4d9692305673",
+  "scope": "owned temporary state, bounded snapshots and downloads, release-approved feed pins; no detection-data changes",
+  "approvalTrust": "trusted application release review; not publisher signature verification"
+}

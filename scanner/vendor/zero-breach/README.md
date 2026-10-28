@@ -1,5 +1,15 @@
 # Zero Breach Toolkit
 
+> **Downstream security-hardening patch, not an upstream release.** See the
+> [fork security changelog](SECURITY-CHANGELOG.md) and the
+> [reproducible demonstration](SECURITY-DEMONSTRATION.md). Original detection
+> logic and indicator attribution are retained. Cleanup no longer trusts stale
+> names, timestamps, or manifests as authority to delete data. For this downstream patch,
+> run `python3 -X utf8 scan/zero-breach-toolkit.py` from this checkout; downloading
+> an upstream release will not include these fixes. Original upstream release
+> signatures do not authenticate downstream-built artifacts. Read the documented
+> platform limitations before use; native Windows behavior is not certified.
+
 A free, open-source check for traces of known mercenary spyware (Pegasus, Predator,
 Graphite, Candiru and others) on computers, Android phones and iPhone backups.
 
@@ -622,3 +632,15 @@ indicator files in `iocs/` and generated indicator exports in `dist/`: CC0 1.0, 
 domain ([iocs/LICENSE.md](iocs/LICENSE.md)). Optional bundled research rules keep their own
 licences in [third_party/candiru](third_party/candiru/README.md). Indicator lists downloaded
 by `--update` remain under their publishers' terms and are not part of this repository.
+
+## Downstream attribution and author credits
+
+**Original software authors:** [ArchiveGenocide / archivegenocide.com (@interplains)](https://github.com/interplains), authors of [Zero Breach Toolkit](https://github.com/interplains/Zero-Breach-Toolkit) and the original [Zero Breach](https://github.com/interplains/zero-breach). Public upstream contributors include **[Luke Hutchison (@lukehutch)](https://github.com/lukehutch)** for the Toolkit and **[@NurAbir](https://github.com/NurAbir)** for original Zero Breach. Full evolving histories are preserved in the [Toolkit contributor record](https://github.com/interplains/Zero-Breach-Toolkit/graphs/contributors) and [Zero Breach contributor record](https://github.com/interplains/zero-breach/graphs/contributors), as well as the downstream branch's Git history. These are source credits, not a claim that every contributor authored every file.
+
+**Downstream changes:** requested by [@1243353366](https://github.com/1243353366), with security implementation, fixture tests, and documentation developed with **Manus AI assistance**. Downstream changes are described separately in [SECURITY-CHANGELOG.md](SECURITY-CHANGELOG.md); they are not attributed to or endorsed by upstream maintainers. Contributor handles here are attribution links, not unsolicited review notifications.
+
+**Research and indicator publishers:** **The Citizen Lab**, **Recorded Future / Insikt Group**, **Confiant**, **Microsoft**, **ESET**, **Avast / Gen**, **Google Threat Analysis Group**, and **Amnesty International Security Lab**. Optional external feeds additionally credit the **Mobile Verification Toolkit (MVT) project** and **Echap**. See the retained [indicator bibliography and data license](iocs/LICENSE.md). Research/help references to Access Now, Kaspersky, Rapid7 / Velociraptor, and SigmaHQ remain in the original [NOTICE](NOTICE); they are not blanket software-author or endorsement claims.
+
+**Optional detection-rule authors:** **Microsoft Threat Intelligence Center (MSTIC)** for `MAL_DevilsTongue_HijackDll` (Detection Rule License 1.1) and **Felix Bilstein** for `win_devilstongue_auto` (CC BY-SA 4.0). Rule provenance, original author metadata, and license texts remain under [third_party/candiru](third_party/candiru/). YARA-X is a separate optional BSD-3-Clause dependency, not silently enabled by this patch.
+
+The original Apache-2.0 software license, copyright, NOTICE, CC0 indicator notice, and third-party licenses remain intact. Attribution does not grant trademark rights, device-scan authorization, or authority for destructive actions. No affiliation or endorsement is implied.

@@ -1,3 +1,4 @@
+# Modified downstream by Compass (2026-10-28): ownership and machine-state security boundaries.
 """Search this machine's browser artifacts for AdFection / Candiru IOC domains.
 
 Why several artifact types and not just history: browser HISTORY only records
@@ -48,6 +49,8 @@ from ..ios_sources import _is_wal_prefix
 from ..localpaths import (WALK_LINK_REFUSED, WALK_SPECIAL_REFUSED, local_temp_dir, open_evidence_db,
                           path_problem, walk_local)
 
+from ..ownedtemp import OwnedSnapshot, discard_owned_snapshot, validate_owned_snapshot_file
+from ..snapshotcopy import copy_snapshot_file
 from ..result import (Hit, Lead, ModuleResult, EV_ON_DISK, EV_PERSISTENCE,
                       EV_CONTACTED, EV_ATTEMPTED, EV_CONFIGURED, EV_REFERENCED)
 
@@ -599,22 +602,27 @@ def copy_locked(path):
     # follows it (exists/getsize follow a redirected file to its destination,
     # which could be a network share). An unsafe sibling is never touched; the
     # copy loop below records it as missing from the snapshot.
-    safe_sidecars = [sfx for sfx in ("-wal", "-shm", "-journal")
-                     if not path_problem(path + sfx)]
-    try:
-        total = os.path.getsize(path) + sum(
-            os.path.getsize(path + sfx) for sfx in safe_sidecars
-            if os.path.exists(path + sfx))
-    except OSError:
-        total = 0   # let the copy below surface the real error
+    states = {}
+    for suffix in ("", "-wal", "-shm", "-journal"):
+        try:
+            states[suffix] = _snapshot_source_state(path + suffix)
+        except OSError:
+            if not suffix:
+                raise
+            states[suffix] = "refused"
+    if states[""] is None:
+        raise FileNotFoundError(2, "snapshot source disappeared", path)
+    total = sum(state[2] for state in states.values() if isinstance(state, tuple))
     if total > _MAX_SNAPSHOT_BYTES:
         raise OSError(27, "database is {:,} bytes, over the {:,}-byte snapshot "
                       "limit, so it was not copied".format(
                           total, _MAX_SNAPSHOT_BYTES), path)
-    tmpdir = tempfile.mkdtemp(prefix="bscan_", dir=local_temp_dir())
+    owner = OwnedSnapshot(prefix="bscan_")
+    tmpdir = owner.path
     try:
         base = os.path.join(tmpdir, os.path.basename(path))
-        shutil.copy2(path, base)
+        used = copy_snapshot_file(path, base, _MAX_SNAPSHOT_BYTES,
+                                 create_destination=lambda: owner.create_file(os.path.basename(base)))
         # A failed sibling copy is NOT cosmetic. A write-ahead log holds rows
         # that are committed but not yet folded into the main file, so losing it
         # silently drops the MOST RECENT evidence - exactly the rows that matter
@@ -623,27 +631,45 @@ def copy_locked(path):
         # and calling it clean (D3).
         incomplete = []
         for suffix in ("-wal", "-shm", "-journal"):
-            if path_problem(path + suffix):
+            if states[suffix] == "refused":
                 incomplete.append("could not copy " + suffix)
                 continue
-            if os.path.exists(path + suffix):
+            if isinstance(states[suffix], tuple):
                 try:
-                    shutil.copy2(path + suffix, base + suffix)
+                    used += copy_snapshot_file(path + suffix, base + suffix,
+                        _MAX_SNAPSHOT_BYTES - used,
+                        create_destination=lambda suffix=suffix: owner.create_file(os.path.basename(base) + suffix))
                 except OSError:
                     incomplete.append("could not copy " + suffix)
+        for suffix, before in states.items():
+            if before == "refused":
+                continue
+            try:
+                after = _snapshot_source_state(path + suffix)
+            except OSError:
+                after = "refused"
+            if before != after:
+                if not suffix:
+                    raise OSError(116, "database changed during snapshot; close the browser and retry", path)
+                incomplete.append(suffix + " changed during snapshot; cross-file consistency unverified")
         # SQLite silently ignores a damaged write-ahead log and reads the older
         # main file, so a broken WAL would drop the newest records without a
         # trace. Validate it the same way the iPhone reader does.
         if os.path.exists(base + "-wal"):
             try:
+                validate_owned_snapshot_file(base)
+                validate_owned_snapshot_file(base + "-wal")
                 with open(base, "rb") as fh:
                     header = fh.read(100)
                 with open(base + "-wal", "rb") as fh:
-                    wal = fh.read()
+                    wal = fh.read(_MAX_SNAPSHOT_BYTES + 1)
+                validate_owned_snapshot_file(base)
+                validate_owned_snapshot_file(base + "-wal")
                 _prefix, issues = _is_wal_prefix(wal, header, max_bytes=_MAX_SNAPSHOT_BYTES)
             except OSError as exc:
                 issues = ["write-ahead log unreadable ({})".format(exc.strerror or type(exc).__name__)]
             incomplete.extend("the write-ahead log is damaged ({})".format(i) for i in issues)
+        validate_owned_snapshot_file(base)
         return base, incomplete
     except BaseException as exc:
         # The one place that makes the temp dir is also the one place that
@@ -655,27 +681,34 @@ def copy_locked(path):
 
 
 def _discard_snapshot(tmpdir, con=None):
-    """Close the open handle, then delete the snapshot - and check it is gone.
+    """Close SQLite and remove only current-process-owned copy identities.
 
-    These temp copies are byte-for-byte duplicates of browser databases, cookie
-    VALUES included, even though the queries only read metadata. Windows refuses
-    to delete a file that an open SQLite connection still holds, and
-    shutil.rmtree(ignore_errors=True) swallows that refusal without a word - so
-    the copies survived in %TEMP% after every scan. A tool that leaves copies of
-    your cookies behind is worse than no tool, so the handle is closed first and
-    the removal is verified rather than assumed. Returns True if the directory
-    is gone."""
+    Unknown paths, substituted roots, extra files, and unsafe platforms are
+    refused. No recursive deletion or restoration is authorized by evidence.
+    The caller reports private leftovers when this returns False.
+    """
     if con is not None:
         try:
             con.close()
         except Exception:
             pass
-    shutil.rmtree(tmpdir, ignore_errors=True)
-    if os.path.exists(tmpdir):
-        # One retry: on Windows an antivirus or indexer can hold a file open for
-        # a moment after the handle closes.
-        shutil.rmtree(tmpdir, ignore_errors=True)
-    return not os.path.exists(tmpdir)
+    return discard_owned_snapshot(tmpdir)
+
+
+def _snapshot_source_state(path):
+    """Observe group changes without granting any authority over source paths."""
+    problem = path_problem(path)
+    if problem:
+        raise PermissionError(13, problem, path)
+    try:
+        info = os.lstat(path)
+    except FileNotFoundError:
+        return None
+    if not stat.S_ISREG(info.st_mode):
+        raise PermissionError(13, "snapshot source is not a regular file", path)
+    return (info.st_dev, info.st_ino, info.st_size,
+            getattr(info, "st_mtime_ns", info.st_mtime),
+            getattr(info, "st_ctime_ns", info.st_ctime))
 
 
 def _chromium_profile_names(user_data):
@@ -1346,8 +1379,8 @@ def run(ctx) -> ModuleResult:
             mark_fail(label, kind, note)
             return None
         try:
-            con = open_evidence_db(tmp)
-        except sqlite3.Error as exc:
+            con = open_evidence_db(tmp, require_owned=True)
+        except (OSError, sqlite3.Error) as exc:
             if not _discard_snapshot(os.path.dirname(tmp)):
                 exc.snapshot_leftover = os.path.dirname(tmp)
             r.skipped += 1
@@ -1825,6 +1858,7 @@ def run(ctx) -> ModuleResult:
         finally:
             # Close the handle BEFORE removing, or Windows keeps the copy.
             if not _discard_snapshot(os.path.dirname(tmp), con):
+                mark_fail(label, kind, "temporary snapshot cleanup refused or failed: " + os.path.dirname(tmp))
                 r.note("could not remove the temporary snapshot of {} - a copy "
                        "may remain in the system temp directory"
                        .format(os.path.basename(path)))
@@ -1890,6 +1924,7 @@ def run(ctx) -> ModuleResult:
         finally:
             # Close the handle BEFORE removing, or Windows keeps the copy.
             if not _discard_snapshot(os.path.dirname(tmp), con):
+                mark_fail(label, kind, "temporary snapshot cleanup refused or failed: " + os.path.dirname(tmp))
                 r.note("could not remove the temporary snapshot of {} - a copy "
                        "may remain in the system temp directory"
                        .format(os.path.basename(path)))
@@ -1997,6 +2032,7 @@ def run(ctx) -> ModuleResult:
         finally:
             # Close the handle BEFORE removing, or Windows keeps the copy.
             if not _discard_snapshot(os.path.dirname(tmp), con):
+                mark_fail(label, kind, "temporary snapshot cleanup refused or failed: " + os.path.dirname(tmp))
                 r.note("could not remove the temporary snapshot of {} - a copy "
                        "may remain in the system temp directory"
                        .format(os.path.basename(path)))

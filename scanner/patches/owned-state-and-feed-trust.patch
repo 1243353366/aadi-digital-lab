@@ -1,0 +1,1471 @@
+diff --git a/PRIVACY.md b/PRIVACY.md
+index a8a70a8..d375714 100644
+--- a/PRIVACY.md
++++ b/PRIVACY.md
+@@ -45,7 +45,9 @@ Zero Breach Toolkit runs entirely on your computer.
+ - An offline scan does not reconfigure your system, quarantine evidence or install software.
+   The separate acquisition command downloads its collector and writes the requested collection.
+ - Temporary snapshots can contain complete browser database bytes, including data not queried
+-  by the scanner. They are removed after use; interrupted runs or cleanup failures can leave
++  by the scanner. Current-process copies are removed only when their ownership and identities
++  can be verified with supported handle-relative operations; refusal, unsupported platforms,
++  interrupted runs or cleanup failures can leave
+   copies in the system temporary directory. The standalone scanner also writes temporary
+   embedded indicator files. Requested reports remain until you remove them.
+ 
+@@ -57,8 +59,8 @@ Phone-backup passwords are entered through a private terminal prompt, not comman
+ arguments, environment variables or report fields. They are used only to read the selected
+ local backup. Python cannot guarantee secure erasure of password or plaintext memory.
+ The iPhone reader creates temporary plaintext database copies on local disk
+-and removes them after use; interruption or cleanup failures can leave copies. No optional
+-snapshot retention was added. Acquisition and archive extraction are separate from scanning, described by `--phone-guide`
++and attempts ownership-bound cleanup after use; interruption, refusal, unsupported platforms,
++or cleanup failures can leave copies, reported as gaps. Acquisition and archive extraction are separate from scanning, described by `--phone-guide`
+ and available through the explicit `--collect-android` command.
+ 
+ Indicator-context and related-record fields belong to the full report and may contain
+@@ -68,6 +70,8 @@ Sharing summaries retain only fixed scope labels and cancellation state, without
+ Requested JSON outputs use temporary files beside the destination and complete-file replacement.
+ Acquisition encryption requests refuse plaintext results before extraction. Envelope checks
+ cannot authenticate ciphertext or prove recipient ownership; decryption is a separate step.
+-On acquisition failure, original/partial collector output is retained with its location reported
+-and may contain unencrypted records. The helper attempts to remove its newly created incomplete
+-analysis directory. Cleanup failure is reported; cleanup is not secure erasure.
++On acquisition failure, original/partial collector output and incomplete analysis are retained
++with their locations reported and may contain unencrypted records. Failure-state paths do not
++authorize recursive deletion. Stale temporary candidates are reported, never automatically
++deleted from their prefix, owner, timestamp, or a manifest. Confirm ownership and active use
++before any manual action. Cleanup is not secure erasure.
+diff --git a/README.md b/README.md
+index df52795..d20949b 100644
+--- a/README.md
++++ b/README.md
+@@ -1,5 +1,15 @@
+ # Zero Breach Toolkit
+ 
++> **Downstream security-hardening patch, not an upstream release.** See the
++> [fork security changelog](SECURITY-CHANGELOG.md) and the
++> [reproducible demonstration](SECURITY-DEMONSTRATION.md). Original detection
++> logic and indicator attribution are retained. Cleanup no longer trusts stale
++> names, timestamps, or manifests as authority to delete data. For this downstream patch,
++> run `python3 -X utf8 scan/zero-breach-toolkit.py` from this checkout; downloading
++> an upstream release will not include these fixes. Original upstream release
++> signatures do not authenticate downstream-built artifacts. Read the documented
++> platform limitations before use; native Windows behavior is not certified.
++
+ A free, open-source check for traces of known mercenary spyware (Pegasus, Predator,
+ Graphite, Candiru and others) on computers, Android phones and iPhone backups.
+ 
+@@ -622,3 +632,15 @@ indicator files in `iocs/` and generated indicator exports in `dist/`: CC0 1.0,
+ domain ([iocs/LICENSE.md](iocs/LICENSE.md)). Optional bundled research rules keep their own
+ licences in [third_party/candiru](third_party/candiru/README.md). Indicator lists downloaded
+ by `--update` remain under their publishers' terms and are not part of this repository.
++
++## Downstream attribution and author credits
++
++**Original software authors:** [ArchiveGenocide / archivegenocide.com (@interplains)](https://github.com/interplains), authors of [Zero Breach Toolkit](https://github.com/interplains/Zero-Breach-Toolkit) and the original [Zero Breach](https://github.com/interplains/zero-breach). Public upstream contributors include **[Luke Hutchison (@lukehutch)](https://github.com/lukehutch)** for the Toolkit and **[@NurAbir](https://github.com/NurAbir)** for original Zero Breach. Full evolving histories are preserved in the [Toolkit contributor record](https://github.com/interplains/Zero-Breach-Toolkit/graphs/contributors) and [Zero Breach contributor record](https://github.com/interplains/zero-breach/graphs/contributors), as well as the downstream branch's Git history. These are source credits, not a claim that every contributor authored every file.
++
++**Downstream changes:** requested by [@1243353366](https://github.com/1243353366), with security implementation, fixture tests, and documentation developed with **Manus AI assistance**. Downstream changes are described separately in [SECURITY-CHANGELOG.md](SECURITY-CHANGELOG.md); they are not attributed to or endorsed by upstream maintainers. Contributor handles here are attribution links, not unsolicited review notifications.
++
++**Research and indicator publishers:** **The Citizen Lab**, **Recorded Future / Insikt Group**, **Confiant**, **Microsoft**, **ESET**, **Avast / Gen**, **Google Threat Analysis Group**, and **Amnesty International Security Lab**. Optional external feeds additionally credit the **Mobile Verification Toolkit (MVT) project** and **Echap**. See the retained [indicator bibliography and data license](iocs/LICENSE.md). Research/help references to Access Now, Kaspersky, Rapid7 / Velociraptor, and SigmaHQ remain in the original [NOTICE](NOTICE); they are not blanket software-author or endorsement claims.
++
++**Optional detection-rule authors:** **Microsoft Threat Intelligence Center (MSTIC)** for `MAL_DevilsTongue_HijackDll` (Detection Rule License 1.1) and **Felix Bilstein** for `win_devilstongue_auto` (CC BY-SA 4.0). Rule provenance, original author metadata, and license texts remain under [third_party/candiru](third_party/candiru/). YARA-X is a separate optional BSD-3-Clause dependency, not silently enabled by this patch.
++
++The original Apache-2.0 software license, copyright, NOTICE, CC0 indicator notice, and third-party licenses remain intact. Attribution does not grant trademark rights, device-scan authorization, or authority for destructive actions. No affiliation or endorsement is implied.
+diff --git a/SECURITY-CHANGELOG.md b/SECURITY-CHANGELOG.md
+new file mode 100644
+index 0000000..1c5c601
+--- /dev/null
++++ b/SECURITY-CHANGELOG.md
+@@ -0,0 +1,41 @@
++# Downstream security changelog
++
++## 2026-10-28 — Owned cleanup and changing-machine-state hardening
++
++This patch is based on Zero Breach Toolkit upstream commit `fd39f351dfa0f611be8f7f8b3ac7f189a1f18ada`. Upstream authorship, indicator attribution, licenses, and historical changelog remain intact. This is a security patch to the read-only forensic tool, not a new remediation or rollback product.
++
++### Authority boundary
++
++The reviewed `scan_recovery` context preserves completed evidence on interruption and clears the backup password. It is **not** a system rollback facility. This patch adds no ability to restore arbitrary paths, modify original evidence, change system permissions, remove malware, or act on instructions embedded in a report or database.
++
++- Stale-folder discovery no longer recursively deletes folders because of a matching name, user ownership, or age. Those observations are not proof of tool creation or inactivity. Candidates are retained and reported for informed human review.
++- Current-process browser and iOS copy cleanup uses in-memory ownership records. There is no on-disk manifest that can grant authority. Recorded directory/file identities, private permissions, no-follow checks, and handle-relative operations bound cleanup to copies created by this invocation.
++- Cleanup is non-recursive. Unknown children, substituted roots, changed file identities, links, unsupported handle-relative operations, and removal failures cause retention and an explicit warning/gap, not permission changes or broader deletion.
++- Acquisition failure retains partial analysis and acquisition records instead of recursively trusting a path from failure state.
++
++### Machine-state boundary
++
++- Hardened browser copying checks opened source identities, enforces the byte budget while reading, uses exclusive private destinations, and rejects changing sources instead of treating an incomplete view as complete coverage.
++- Source snapshot consistency checks do not freeze a running browser or prove a cross-file transaction is atomic. Changed database/sidecar state must be surfaced as incomplete coverage.
++- SQLite connections use `mode=ro` at open time, not just `PRAGMA query_only` afterward. A vanished copy cannot silently become a new empty database. Existing schema, memory, column, and expression guards remain.
++- WAL validation, missing-sidecar gaps, partial results, and cleanup-failure disclosures are preserved. No detection indicators or evidence-grade meanings are reclassified by this patch.
++
++### Operational limits
++
++This is not an OS sandbox. A compromised kernel, administrator, or hostile process with the scanner's own identity can defeat application-level assumptions. POSIX network mounts may look local. Strict offline/hostile-machine forensics requires trusted acquisition and OS-level isolation. On platforms lacking the required handle-relative primitives, the hardened copy path fails closed and/or retains private copies with a reported gap rather than claiming equivalent protection. Native Windows hardening is not certified by the Linux fixture run. Retention is not secure erasure.
++
++The patch must not be described as eliminating every race, detecting all spyware, or proving the machine safe. Detection behavior on stable supported fixtures is retained; unsafe/unvalidated states produce explicit gaps or failures.
++
++### Credits
++
++Original scanner authors: ArchiveGenocide / archivegenocide.com ([interplains](https://github.com/interplains)), plus upstream contributor Luke Hutchison ([lukehutch](https://github.com/lukehutch)); original Zero Breach contributors include [NurAbir](https://github.com/NurAbir). Downstream changes requested and maintained by [1243353366](https://github.com/1243353366), with implementation and tests developed with Manus AI assistance. Research publishers and optional rule authors remain credited in the README and original NOTICE. These are attribution links, not requests for upstream review or claims of endorsement.
++
++### Indicator-source approval and updater resource limits
++
++The paired digest downloaded with an indicator list is not independent publisher authentication. The patched Toolkit updater and cached-feed loader require the canonical source descriptor, source commit, and byte digest approved in the trusted application release. Mutable cache metadata, `--latest`, arbitrary descriptors, and `--accept-shrink` cannot promote unapproved content. New approvals require a reviewed application-release change; neither a self-supplied digest nor successful parsing is an approval.
++
++The Toolkit already bounded its `resp.read(MAX_DOWNLOAD + 1)` before this patch. It now streams in at most 64 KiB chunks within that same total budget and rejects invalid/oversized declared lengths and unsupported response encoding before reading the body. Actual response bytes, not Content-Length alone, enforce the cap; the existing network timeout is retained. Synthetic tests cover absent/lying headers, oversized streams, exact limits, closure on failure, and valid responses.
++
++The original Zero Breach updater (a different code path at original commit `1c7e9b6df81ea45982ec7d0f4fb607ffbbd55e00`) did have an unbounded `resp.read()` with a 30-second timeout. A separate, tested `original-updater-bounded-read.patch` is included in Digital Lab's `scanner/patches/`, not silently substituted for the bundled Toolkit updater. It adds explicit data/checksum response limits. The ordinary Compass device command still performs no downloads and uses no downloaded feed cache.
++
++These are indicator-poisoning and updater resource-exhaustion controls. They do not demonstrate arbitrary code execution, a remotely exploitable scanner defect, active host discovery, or self-propagation. Trusted distribution compromise or semantically incorrect approved indicators remain outside the guarantees.
+diff --git a/SECURITY-DEMONSTRATION.md b/SECURITY-DEMONSTRATION.md
+new file mode 100644
+index 0000000..029f116
+--- /dev/null
++++ b/SECURITY-DEMONSTRATION.md
+@@ -0,0 +1,64 @@
++# Recovery, machine-state, and feed-trust demonstration
++
++## Scope
++
++These are synthetic temporary-file tests, not a device scan. No real browser, phone, company evidence, system setting, or production deployment was inspected or changed. Original indicator data and evidence-grade semantics remain intact. The downstream patch is intended for the `security/scanner-recovery-trust-boundaries` branch of `1243353366/aadi-digital-lab`; it does not replace `main`.
++
++## Confirmed before/after: untrusted cleanup state
++
++A disposable directory named `bscan_forged-old-state` was created with an old timestamp, a synthetic important-file sentinel, and a forged `ownership.json` containing an asserted ownership flag and a fabricated restoration path. Both implementations were called **only** with the disposable test directory as their explicit base.
++
++At original upstream `fd39f351dfa0f611be8f7f8b3ac7f189a1f18ada`:
++
++```json
++{"syntheticSentinelPreserved": false, "removed": 1, "reportedLeftovers": 0}
++```
++
++With the patch:
++
++```json
++{"syntheticSentinelPreserved": true, "removed": 0, "reportedLeftovers": 1}
++```
++
++The fix removes the automatic deletion grant. Prefix/age/owner observations and any file claiming authority are **not** interpreted as permission to delete or restore. The original `scan_recovery` routine only retains partial evidence; no system rollback operation is added by this patch.
++
++## What the regression tests demonstrate
++
++| Scenario | Required outcome |
++| --- | --- |
++| Arbitrary folder or forged ownership manifest | No cleanup authority; sentinel remains |
++| Genuine current-process private copy | Delete only registered identities, without recursion |
++| Root replaced by link or a different directory | Refuse cleanup; replacement and outside data remain |
++| Unexpected child, changed identity, or link | Refuse rather than broaden deletion |
++| Deletion error or unsupported handle primitives | Retain and report; do not report successful cleanup |
++| Source swapped, changed, grown, shrunk, or replaced | Refuse unstable copy, with a bounded byte budget |
++| WAL appears/changes or cannot be copied | Explicit incomplete-view warning; not full coverage |
++| Evidence database disappears before connection | Read-only open fails; no empty database created |
++| Attempted SQL write to an existing copy | Refused at connection/read-only policy boundary |
++| Syntactically valid poisoned feed plus matching cache digest | A self-consistent cache does not grant approval |
++| `--latest`, shrink override, missing trust pin, or forged source | Must not bypass the shipped approval boundary |
++| Previously approved source bytes | Still eligible under the approved source/commit/hash |
++
++Source byte copying is bounded and descriptor-aware; it is not a frozen or cryptographically attested image of a live machine. Group metadata checks reduce inconsistent views but cannot prove an atomic cross-file snapshot against a privileged/same-identity adversary.
++
++## Reproduce in Digital Lab
++
++From the branch checkout, using Python 3.10+:
++
++```bash
++python3 -m venv .security-venv
++.security-venv/bin/python -m pip install pytest==8.4.2
++PYTHONPATH=scanner/vendor/zero-breach/scan .security-venv/bin/python -m pytest -q scanner/security_tests
++python3 -m unittest discover -s scanner/tests -v
++python3 scanner/compass_scan.py --preview
++```
++
++The preview and fixture commands do not start a live-device scan. On Windows, use the virtual environment's `Scripts/python.exe` and set `PYTHONPATH` appropriately. The Linux fixtures are not native Windows certification; hardened snapshot copying fails closed where required handle operations are unavailable, and private temporary copies can remain with a reported gap.
++
++The separate scanner audit remains `python3 scanner/audit_scanner.py`. Its report is not a device finding and cannot override original scan verdicts.
++
++## Indicator authenticity boundary
++
++A publisher-hosted digest accompanying a download establishes byte consistency only. Parsing a list proves format compatibility, not authenticity or semantic truth. Update/scan acceptance must compare with the source descriptor, immutable revision, and digest shipped in the **reviewed application release**, outside mutable downloaded/cache state. An untrusted list, cache manifest, count-change override, or latest flag cannot revise those approvals. New feed revisions require a reviewed approval/pin change in a trusted application release.
++
++This does not prove that a research source is correct, nor protect a trusted application distribution whose code and approval values are both compromised. Publisher signatures, delegated key management, and a secure update-delivery system are not silently claimed to exist. The threat demonstrated is poisoned detection data affecting findings/coverage; it does not by itself demonstrate arbitrary code execution or a self-propagating worm.
+diff --git a/build/bundle.py b/build/bundle.py
+index acb2d12..dd8a4ea 100644
+--- a/build/bundle.py
++++ b/build/bundle.py
+@@ -262,6 +262,8 @@ for label, fname in (("result", "result.py"),
+                      ("stix", "stix.py"),
+                      ("netguard", "netguard.py"),
+                      ("localpaths", "localpaths.py"),
++                     ("ownedtemp", "ownedtemp.py"),
++                     ("snapshotcopy", "snapshotcopy.py"),
+                      ("feeds", "feeds.py"),
+                      ("heuristics", "heuristics.py"),
+                      ("context", "context.py"),
+@@ -306,26 +308,30 @@ def _load_embedded_iocs(path=None):
+     if path:
+         return load(path)
+     import tempfile
+-    tmp = tempfile.mkdtemp(prefix="adint_ioc_", dir=local_temp_dir())
++    owner = OwnedSnapshot(prefix="adint_ioc_")
++    tmp = owner.path
+     try:
+         p = os.path.join(tmp, "adfection_iocs.txt")
+-        with io.open(p, "w", encoding="utf-8", newline="\\n") as fh:
++        with os.fdopen(owner.create_file("adfection_iocs.txt"), "w", encoding="utf-8", newline="\\n") as fh:
+             fh.write(IOC_DATA)
+         ioc_set = load(p)
+     finally:
+-        shutil.rmtree(tmp, ignore_errors=True)
++        if not owner.cleanup():
++            print("WARNING: temporary embedded indicators retained: " + tmp, file=sys.stderr)
+     # Report the age of the DATA, not of the temp file we just wrote, so the
+     # staleness warning stays truthful in a single-file build.
+     ioc_set.source_mtime = IOC_BUILD_EPOCH
+     ioc_set.source_path = "(embedded in this script)"
+-    tmp2 = tempfile.mkdtemp(prefix="zbt_ioc2_", dir=local_temp_dir())
++    owner2 = OwnedSnapshot(prefix="zbt_ioc2_")
++    tmp2 = owner2.path
+     try:
+         p2 = os.path.join(tmp2, "curated_mercenary.txt")
+-        with io.open(p2, "w", encoding="utf-8", newline="\\n") as fh:
++        with os.fdopen(owner2.create_file("curated_mercenary.txt"), "w", encoding="utf-8", newline="\\n") as fh:
+             fh.write(IOC_DATA_2)
+         second = load(p2)
+     finally:
+-        shutil.rmtree(tmp2, ignore_errors=True)
++        if not owner2.cleanup():
++            print("WARNING: temporary embedded indicators retained: " + tmp2, file=sys.stderr)
+     second.source_mtime = IOC_BUILD_EPOCH
+     second.source_path = "(embedded in this script)"
+     return merge([ioc_set, second])
+diff --git a/scan/zbtriage/feeds.py b/scan/zbtriage/feeds.py
+index 8d35b95..9bd453a 100644
+--- a/scan/zbtriage/feeds.py
++++ b/scan/zbtriage/feeds.py
+@@ -1,3 +1,4 @@
++# Modified downstream by Compass (2026-10-28): approved feed trust and bounded response streaming.
+ """Official published indicator sources, and the `--update` command.
+ 
+ The scan itself never touches the network (netguard.no_network). Updating the
+@@ -10,9 +11,10 @@ source at the user's request (as MVT itself does) rather than redistributed.
+ Safety rules, each enforced in code and pinned by tests/test_feeds.py:
+   - only https://raw.githubusercontent.com/<allow-listed owner>/... ; a redirect
+     anywhere else is refused;
+-  - by default each source is downloaded at the commit pinned for this release
++  - each source is downloaded only at the commit pinned for this release
+     (FEED_PINS), and must match the SHA-256 this release recorded for it
+-    (FEED_FILE_SHA256); `--update --latest` follows the upstream branch instead;
++    (FEED_FILE_SHA256); source descriptors and cache metadata cannot grant
++    a new origin, revision, or digest;
+   - every download is size-capped, must not be an HTML page, and must parse
+     into at least one usable indicator BEFORE it replaces the cached copy - a
+     failed download keeps the previous good copy;
+@@ -419,10 +421,26 @@ def _fetch(url: str) -> bytes:
+     # A generic label: the sources' servers need not learn that this is a spyware check.
+     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+     with opener.open(req, timeout=TIMEOUT_S) as resp:
+-        data = resp.read(MAX_DOWNLOAD + 1)
+-    if len(data) > MAX_DOWNLOAD:
+-        raise IocError("download larger than {:,} bytes - refused".format(MAX_DOWNLOAD))
+-    return data
++        headers = getattr(resp, "headers", {})
++        declared = headers.get("Content-Length")
++        if declared is not None:
++            try:
++                length = int(declared)
++            except (ValueError, TypeError):
++                raise IocError("invalid download Content-Length")
++            if length < 0 or length > MAX_DOWNLOAD:
++                raise IocError("download larger than {:,} bytes or invalid length - refused".format(MAX_DOWNLOAD))
++        if headers.get("Content-Encoding", "identity").lower() not in ("", "identity"):
++            raise IocError("encoded indicator downloads are not supported")
++        data = bytearray()
++        while True:
++            chunk = resp.read(min(65536, MAX_DOWNLOAD - len(data) + 1))
++            if not chunk:
++                break
++            if len(data) + len(chunk) > MAX_DOWNLOAD:
++                raise IocError("download larger than {:,} bytes - refused".format(MAX_DOWNLOAD))
++            data.extend(chunk)
++    return bytes(data)
+ 
+ 
+ def _certificate_problem(exc) -> bool:
+@@ -497,6 +515,39 @@ def _write_manifest(cache: str, entries: Dict[str, Dict[str, object]]) -> None:
+     os.replace(tmp, final)
+ 
+ 
++def _release_approved_source(src: Dict[str, str]) -> Tuple[Dict[str, str], str, str, str]:
++    """Return a source's application-shipped descriptor and immutable anchors.
++
++    The optional ``sources`` argument selects which built-in sources to update;
++    it cannot add a source or alter a source's descriptor.  The source catalogue
++    and the release pins are the trust root, not a cache or download manifest.
++    """
++    if not isinstance(src, dict) or not isinstance(src.get("id"), str):
++        raise IocError("refused: source descriptor has no valid source id")
++    sid = src["id"]
++    matches = [candidate for candidate in SOURCES
++               if isinstance(candidate, dict) and candidate.get("id") == sid]
++    if len(matches) != 1:
++        raise IocError("refused: {!r} is not a canonical release-approved source".format(sid))
++    canonical = matches[0]
++    if src != canonical:
++        raise IocError("refused: source descriptor for {!r} does not match the "
++                       "release-approved descriptor".format(sid))
++    repo = canonical.get("repo")
++    pin = FEED_PINS.get(repo)
++    if not (isinstance(pin, str) and len(pin) == 40 and
++            all(c in "0123456789abcdef" for c in pin)):
++        raise IocError("refused: {!r} has no release-approved commit pin".format(sid))
++    expected = FEED_FILE_SHA256.get(sid)
++    if not (isinstance(expected, str) and len(expected) == 64 and
++            all(c in "0123456789abcdef" for c in expected)):
++        raise IocError("refused: {!r} has no release-approved SHA-256 digest".format(sid))
++    pinned = _pinned_url(canonical)
++    if not (url_allowed(canonical.get("url")) and pinned and url_allowed(pinned)):
++        raise IocError("refused: {!r} has an invalid release-approved origin".format(sid))
++    return canonical, pin, expected, pinned
++
++
+ def update(cache: Optional[str] = None, sources: Optional[List[Dict[str, str]]] = None,
+            fetch: Callable[[str], bytes] = _fetch,
+            emit: Callable[[str], None] = lambda s: None,
+@@ -505,8 +556,15 @@ def update(cache: Optional[str] = None, sources: Optional[List[Dict[str, str]]]
+     """Download every source; keep the previous copy of any that fails.
+     Returns a summary: per source ok / unchanged / failed, with counts.
+ 
+-    By default a source is fetched at this release's pinned commit and must
+-    match the SHA-256 recorded for it; `latest` follows the upstream branch."""
++    Every replacement is fetched at this release's pinned commit and must
++    match the SHA-256 recorded for it. Source descriptors and manifests cannot
++    authorize a new origin, revision, or digest."""
++    if latest:
++        raise IocError("--latest cannot bypass release-approved indicator pins; "
++                       "install a reviewed release with updated pins instead")
++    if accept_shrink:
++        raise IocError("--accept-shrink cannot authorize indicator content; "
++                       "install a reviewed release with updated pins instead")
+     cache = cache or default_cache_dir()
+     problem = path_problem(os.path.abspath(cache))
+     if problem:
+@@ -514,20 +572,19 @@ def update(cache: Optional[str] = None, sources: Optional[List[Dict[str, str]]]
+     os.makedirs(cache, exist_ok=True)
+     manifest = read_manifest(cache)
+     results = []
+-    for src in (sources if sources is not None else SOURCES):
+-        name = src["id"] + _EXT[src["format"]]
+-        pinned = None if latest else _pinned_url(src)
+-        url = pinned or src["url"]
+-        expected = FEED_FILE_SHA256.get(src["id"]) if pinned else None
+-        revision = FEED_PINS[src["repo"]] if pinned else ("branch head" if latest else "unpinned")
+-        entry = {"id": src["id"], "name": src["name"], "url": url, "revision": revision}
++    for supplied in (sources if sources is not None else SOURCES):
++        sid = supplied.get("id") if isinstance(supplied, dict) and isinstance(supplied.get("id"), str) else "unknown"
++        entry = {"id": sid, "name": supplied.get("name", sid) if isinstance(supplied, dict) else sid}
+         try:
++            src, revision, expected, url = _release_approved_source(supplied)
++            name = src["id"] + _EXT[src["format"]]
++            entry.update(name=src["name"], url=url, revision=revision)
+             final = _feed_local_path(cache, name)
+             data = fetch(url)
+             if _looks_like_html(data):
+                 raise IocError("got a web page, not an indicator file")
+             digest = _feed_sha256(data)
+-            if expected and digest != expected:
++            if digest != expected:
+                 raise IocError("the file at the pinned revision does not match the SHA-256 recorded "
+                                "in this release; the previous copy was kept")
+             old = manifest.get(src["id"])
+@@ -556,22 +613,11 @@ def update(cache: Optional[str] = None, sources: Optional[List[Dict[str, str]]]
+                 # tampered upstream file) must not silently make scans look clean:
+                 # keep the previous copy and report why. Measured against the
+                 # highest count this cache has held, so repeated smaller drops
+-                # cannot empty a source either. A file matching the hash this
+-                # release recorded was reviewed, so it resets the measure.
++                # cannot empty a source either. A matching release hash was
++                # reviewed, so it resets the measure.
+                 counts = [old.get(k) for k in ("indicators", "peak_indicators")] if isinstance(old, dict) else []
+                 peak = max([c for c in counts if type(c) is int], default=0)
+-                reviewed = bool(expected)
+-                if not reviewed and peak > 0 and (
+-                        len(parsed) == 0 or (peak >= 20 and len(parsed) < peak // 2)):
+-                    if src["id"] not in (accept_shrink or ()):
+-                        raise IocError("indicator count fell from {} to {} (measured against the most this cache "
+-                                       "has held); the previous copy was kept. Check the source; if the change is "
+-                                       "genuine, accept it with --update --accept-shrink {}".format(
+-                                           peak, len(parsed), src["id"]))
+-                    emit("[!] {}: indicator count fell from {} to {}; accepted as requested".format(
+-                        src["name"], peak, len(parsed)))
+-                    reviewed = True
+-                peak = len(parsed) if reviewed else max(peak, len(parsed))
++                peak = len(parsed)
+             except Exception:
+                 os.unlink(tmp)
+                 raise
+@@ -595,8 +641,8 @@ def update(cache: Optional[str] = None, sources: Optional[List[Dict[str, str]]]
+                 _write_manifest(cache, manifest)
+                 raise IocError(_certificate_help())
+             entry.update(status="failed", error=str(exc)[:300],
+-                         kept_previous=src["id"] in manifest)
+-            emit("[!] {} failed: {}".format(src["name"], str(exc)[:160]))
++                         kept_previous=sid in manifest)
++            emit("[!] {} failed: {}".format(entry["name"], str(exc)[:160]))
+         results.append(entry)
+     _write_manifest(cache, manifest)
+     failed = [r for r in results if r["status"] == "failed"]
+@@ -612,9 +658,9 @@ def cached_sets(cache: Optional[str] = None,
+     report. A file whose SHA-256 no longer matches the manifest is REFUSED (it
+     was edited or corrupted after download) and reported, never scanned.
+ 
+-    A file that is not the copy pinned for this release is refused too, unless
+-    the scan itself was started with `latest` (--latest). The manifest cannot
+-    grant that: whoever could edit the file could also edit the manifest."""
++    A file that is not the copy approved for this release is refused, including
++    when the scan is started with `latest`. The manifest cannot grant that:
++    whoever could edit the file could also edit the manifest."""
+     cache = cache or default_cache_dir()
+     sets: List[IocSet] = []
+     status = {"cache": cache, "downloaded": False, "loaded": [],
+@@ -633,6 +679,11 @@ def cached_sets(cache: Optional[str] = None,
+         if src is None:
+             status["refused"].append({"id": sid, "reason": "not a known source"})
+             continue
++        try:
++            _canonical, _revision, expected, _url = _release_approved_source(src)
++        except IocError as exc:
++            status["refused"].append({"id": sid, "reason": str(exc)})
++            continue
+         # The source catalogue, never the manifest, chooses the file to open.
+         name = sid + _EXT[src["format"]]
+         if not isinstance(meta, dict) or meta.get("file") != name:
+@@ -648,17 +699,16 @@ def cached_sets(cache: Optional[str] = None,
+         except OSError:
+             status["missing"].append(sid)
+             continue
+-        if _feed_sha256(data) != meta.get("sha256"):
++        digest = _feed_sha256(data)
++        if digest != meta.get("sha256"):
+             status["refused"].append({"id": sid, "reason": "file changed since download"})
+             continue
+         # Judged by content against the hash the release itself carries, which
+         # the cache cannot rewrite - never by the manifest's revision field.
+-        expected = FEED_FILE_SHA256.get(sid)
+-        pinned_here = bool(expected) and _feed_sha256(data) == expected
+-        if expected and not pinned_here and not latest:
+-            status["refused"].append({"id": sid, "reason": "not the copy pinned for this release; "
+-                                                           "update the indicator lists, or scan "
+-                                                           "with --latest to use newer lists"})
++        pinned_here = digest == expected
++        if not pinned_here:
++            status["refused"].append({"id": sid, "reason": "not the copy approved for this release; "
++                                                           "install a reviewed release with updated pins"})
+             continue
+         try:
+             loaded = _load_source_file(src, path)
+diff --git a/scan/zbtriage/ios_sources.py b/scan/zbtriage/ios_sources.py
+index 549555d..de446c0 100644
+--- a/scan/zbtriage/ios_sources.py
++++ b/scan/zbtriage/ios_sources.py
+@@ -1,3 +1,4 @@
++# Modified downstream by Compass (2026-10-28): ownership and machine-state security boundaries.
+ """Bounded iOS evidence sources. Never write to an input or resolve its links.
+ 
+ Backup file keys and artifact names come from the manifest. Filesystem and
+@@ -20,6 +21,7 @@ import time
+ 
+ from .backupcrypto import backup_cbc, backup_ios_keys, backup_ios_file_key
+ from .localpaths import local_temp_dir, open_evidence_db, path_problem
++from .ownedtemp import OwnedSnapshot
+ 
+ _IS_FILE_LIMIT = 256 * 1024 * 1024
+ _IS_TOTAL_LIMIT = 1024 * 1024 * 1024
+@@ -150,6 +152,7 @@ class IosEvidenceSource:
+         self.gap, self.emit, self.read_file = gap, emit, read
+         self.query, self.tables, self.unarchive = query, tables, unarchive
+         self.tmp, self.connections, self.entries = None, [], []
++        self.temp_owner = None
+         self.database_serial = 0
+         self.index, self.keys, self.encrypted = None, {}, False
+         self.total, self.provenance, self.cached = 0, {}, {}
+@@ -164,7 +167,8 @@ class IosEvidenceSource:
+     def start(self):
+         if path_problem(self.root):
+             raise ValueError("refused iPhone evidence root")
+-        self.tmp = tempfile.mkdtemp(prefix="zbt_ios_", dir=local_temp_dir())
++        self.temp_owner = OwnedSnapshot(prefix="zbt_ios_")
++        self.tmp = self.temp_owner.path
+         if self.kind == "backup":
+             try:
+                 manifest = _is_plist(self.read_file(os.path.join(self.root, "Manifest.plist"), 4 * 1024 * 1024))
+@@ -363,7 +367,7 @@ class IosEvidenceSource:
+                             self.total += len(raw)
+                             key = ("", name)
+                             dest = os.path.join(self.tmp, "member-" + str(n))
+-                            with open(dest, "xb") as fh:
++                            with os.fdopen(self.temp_owner.create_file(os.path.basename(dest)), "wb") as fh:
+                                 fh.write(raw)
+                             self.cached[key] = dest
+                             self._remember(key, self.root, raw, name)
+@@ -455,15 +459,15 @@ class IosEvidenceSource:
+         # partial copy must not prevent a later artifact from being opened.
+         dest = os.path.join(self.tmp, "db-" + str(self.database_serial))
+         self.database_serial += 1
+-        with open(dest, "xb") as fh:
++        with os.fdopen(self.temp_owner.create_file(os.path.basename(dest)), "wb") as fh:
+             fh.write(raw)
+         prefix, issues = _is_wal_prefix(wal, raw)
+         for issue in issues:
+             self.gap(check, issue + "; only earlier validated committed data can be read")
+         if prefix:
+-            with open(dest + "-wal", "xb") as fh:
++            with os.fdopen(self.temp_owner.create_file(os.path.basename(dest) + "-wal"), "wb") as fh:
+                 fh.write(prefix)
+-        con = open_evidence_db(dest)
++        con = open_evidence_db(dest, require_owned=True)
+         self.connections.append(con)
+         return con
+ 
+@@ -474,11 +478,8 @@ class IosEvidenceSource:
+                 con.close()
+             except sqlite3.Error:
+                 pass
+-        if self.tmp:
+-            try:
+-                shutil.rmtree(self.tmp)
+-            except OSError:
+-                self.gap("ios:input", "temporary plaintext cleanup failed; private records may remain in the local temporary directory")
++        if self.tmp and (self.temp_owner is None or not self.temp_owner.cleanup()):
++            self.gap("ios:input", "temporary plaintext cleanup refused or failed; private records may remain in " + self.tmp)
+ 
+ 
+ def _is_archive_candidate(name):
+diff --git a/scan/zbtriage/localpaths.py b/scan/zbtriage/localpaths.py
+index aa15cd5..dadd947 100644
+--- a/scan/zbtriage/localpaths.py
++++ b/scan/zbtriage/localpaths.py
+@@ -1,3 +1,4 @@
++# Modified downstream by Compass (2026-10-28): ownership and machine-state security boundaries.
+ """Refuse Windows remote drives and filesystem redirections before reads.
+ 
+ Checks are conservative and use lstat so a reparse point is inspected rather
+@@ -137,11 +138,13 @@ STALE_TEMP_AGE = 12 * 3600
+ 
+ 
+ def sweep_stale_temp(max_age=STALE_TEMP_AGE, now=None, base=None):
+-    """Remove this tool's temporary folders left by an earlier scan that did
+-    not finish. Only plain folders with the tool's prefixes, owned by this user
+-    (on Windows the temporary directory is already per user), and untouched for
+-    max_age seconds, so a scan running at the same time is never disturbed.
+-    Returns {"removed": count, "failed": [paths that are still there]}."""
++    """Report candidates, never delete based on names, owner or age alone.
++
++    These are untrusted filesystem observations, not proof this tool created
++    the contents or that another scan is not using them. Keep the report keys
++    for compatibility; removed is always zero. Current-process cleanup uses
++    non-persistent ownership records instead of granting stale data authority.
++    """
+     out = {"removed": 0, "failed": []}
+     try:
+         base = base or local_temp_dir()
+@@ -160,11 +163,7 @@ def sweep_stale_temp(max_age=STALE_TEMP_AGE, now=None, base=None):
+                 or (hasattr(os, "getuid") and info.st_uid != os.getuid())
+                 or now - info.st_mtime < max_age):
+             continue
+-        shutil.rmtree(entry.path, ignore_errors=True)
+-        if os.path.lexists(entry.path):
+-            out["failed"].append(entry.path)
+-        else:
+-            out["removed"] += 1
++        out["failed"].append(entry.path)
+     return out
+ 
+ 
+@@ -241,15 +240,23 @@ def walk_local(root, onerror=None):
+         pending.extend(os.path.join(current, d) for d in reversed(dirs))
+ 
+ 
+-def open_evidence_db(path):
++def open_evidence_db(path, require_owned=False):
+     """Open the tool's private temporary copy of an evidence database, hardened
+     the same way for every reader: schema-defined functions and views are not
+     trusted, nothing can be written, and string/blob, column and expression
+     sizes are bounded so a hostile database cannot exhaust memory or the stack.
+     Callers query only; the live original is never opened here."""
+     import sqlite3
+-    con = sqlite3.connect(path)
++    from pathlib import Path
++    from .ownedtemp import validate_owned_snapshot_file
++    if require_owned:
++        validate_owned_snapshot_file(path)
++    # query_only is not enough: a default SQLite connect creates a new file if
++    # the validated copy disappears before use. Refuse instead, before any SQL.
++    con = sqlite3.connect(Path(os.path.abspath(path)).as_uri() + "?mode=ro", uri=True)
+     try:
++        if require_owned:
++            validate_owned_snapshot_file(path)
+         con.execute("PRAGMA trusted_schema=OFF")
+         con.execute("PRAGMA query_only=ON")
+         con.execute("PRAGMA mmap_size=0")
+@@ -257,7 +264,7 @@ def open_evidence_db(path):
+             con.setlimit(sqlite3.SQLITE_LIMIT_LENGTH, 2 * 1024 * 1024)
+             con.setlimit(sqlite3.SQLITE_LIMIT_COLUMN, 256)
+             con.setlimit(sqlite3.SQLITE_LIMIT_EXPR_DEPTH, 100)
+-    except sqlite3.Error:
++    except (OSError, sqlite3.Error):
+         con.close()
+         raise
+     return con
+diff --git a/scan/zbtriage/modules/browser.py b/scan/zbtriage/modules/browser.py
+index c07f3ac..8235d57 100644
+--- a/scan/zbtriage/modules/browser.py
++++ b/scan/zbtriage/modules/browser.py
+@@ -1,3 +1,4 @@
++# Modified downstream by Compass (2026-10-28): ownership and machine-state security boundaries.
+ """Search this machine's browser artifacts for AdFection / Candiru IOC domains.
+ 
+ Why several artifact types and not just history: browser HISTORY only records
+@@ -48,6 +49,8 @@ from ..ios_sources import _is_wal_prefix
+ from ..localpaths import (WALK_LINK_REFUSED, WALK_SPECIAL_REFUSED, local_temp_dir, open_evidence_db,
+                           path_problem, walk_local)
+ 
++from ..ownedtemp import OwnedSnapshot, discard_owned_snapshot, validate_owned_snapshot_file
++from ..snapshotcopy import copy_snapshot_file
+ from ..result import (Hit, Lead, ModuleResult, EV_ON_DISK, EV_PERSISTENCE,
+                       EV_CONTACTED, EV_ATTEMPTED, EV_CONFIGURED, EV_REFERENCED)
+ 
+@@ -599,22 +602,27 @@ def copy_locked(path):
+     # follows it (exists/getsize follow a redirected file to its destination,
+     # which could be a network share). An unsafe sibling is never touched; the
+     # copy loop below records it as missing from the snapshot.
+-    safe_sidecars = [sfx for sfx in ("-wal", "-shm", "-journal")
+-                     if not path_problem(path + sfx)]
+-    try:
+-        total = os.path.getsize(path) + sum(
+-            os.path.getsize(path + sfx) for sfx in safe_sidecars
+-            if os.path.exists(path + sfx))
+-    except OSError:
+-        total = 0   # let the copy below surface the real error
++    states = {}
++    for suffix in ("", "-wal", "-shm", "-journal"):
++        try:
++            states[suffix] = _snapshot_source_state(path + suffix)
++        except OSError:
++            if not suffix:
++                raise
++            states[suffix] = "refused"
++    if states[""] is None:
++        raise FileNotFoundError(2, "snapshot source disappeared", path)
++    total = sum(state[2] for state in states.values() if isinstance(state, tuple))
+     if total > _MAX_SNAPSHOT_BYTES:
+         raise OSError(27, "database is {:,} bytes, over the {:,}-byte snapshot "
+                       "limit, so it was not copied".format(
+                           total, _MAX_SNAPSHOT_BYTES), path)
+-    tmpdir = tempfile.mkdtemp(prefix="bscan_", dir=local_temp_dir())
++    owner = OwnedSnapshot(prefix="bscan_")
++    tmpdir = owner.path
+     try:
+         base = os.path.join(tmpdir, os.path.basename(path))
+-        shutil.copy2(path, base)
++        used = copy_snapshot_file(path, base, _MAX_SNAPSHOT_BYTES,
++                                 create_destination=lambda: owner.create_file(os.path.basename(base)))
+         # A failed sibling copy is NOT cosmetic. A write-ahead log holds rows
+         # that are committed but not yet folded into the main file, so losing it
+         # silently drops the MOST RECENT evidence - exactly the rows that matter
+@@ -623,27 +631,45 @@ def copy_locked(path):
+         # and calling it clean (D3).
+         incomplete = []
+         for suffix in ("-wal", "-shm", "-journal"):
+-            if path_problem(path + suffix):
++            if states[suffix] == "refused":
+                 incomplete.append("could not copy " + suffix)
+                 continue
+-            if os.path.exists(path + suffix):
++            if isinstance(states[suffix], tuple):
+                 try:
+-                    shutil.copy2(path + suffix, base + suffix)
++                    used += copy_snapshot_file(path + suffix, base + suffix,
++                        _MAX_SNAPSHOT_BYTES - used,
++                        create_destination=lambda suffix=suffix: owner.create_file(os.path.basename(base) + suffix))
+                 except OSError:
+                     incomplete.append("could not copy " + suffix)
++        for suffix, before in states.items():
++            if before == "refused":
++                continue
++            try:
++                after = _snapshot_source_state(path + suffix)
++            except OSError:
++                after = "refused"
++            if before != after:
++                if not suffix:
++                    raise OSError(116, "database changed during snapshot; close the browser and retry", path)
++                incomplete.append(suffix + " changed during snapshot; cross-file consistency unverified")
+         # SQLite silently ignores a damaged write-ahead log and reads the older
+         # main file, so a broken WAL would drop the newest records without a
+         # trace. Validate it the same way the iPhone reader does.
+         if os.path.exists(base + "-wal"):
+             try:
++                validate_owned_snapshot_file(base)
++                validate_owned_snapshot_file(base + "-wal")
+                 with open(base, "rb") as fh:
+                     header = fh.read(100)
+                 with open(base + "-wal", "rb") as fh:
+-                    wal = fh.read()
++                    wal = fh.read(_MAX_SNAPSHOT_BYTES + 1)
++                validate_owned_snapshot_file(base)
++                validate_owned_snapshot_file(base + "-wal")
+                 _prefix, issues = _is_wal_prefix(wal, header, max_bytes=_MAX_SNAPSHOT_BYTES)
+             except OSError as exc:
+                 issues = ["write-ahead log unreadable ({})".format(exc.strerror or type(exc).__name__)]
+             incomplete.extend("the write-ahead log is damaged ({})".format(i) for i in issues)
++        validate_owned_snapshot_file(base)
+         return base, incomplete
+     except BaseException as exc:
+         # The one place that makes the temp dir is also the one place that
+@@ -655,27 +681,34 @@ def copy_locked(path):
+ 
+ 
+ def _discard_snapshot(tmpdir, con=None):
+-    """Close the open handle, then delete the snapshot - and check it is gone.
+-
+-    These temp copies are byte-for-byte duplicates of browser databases, cookie
+-    VALUES included, even though the queries only read metadata. Windows refuses
+-    to delete a file that an open SQLite connection still holds, and
+-    shutil.rmtree(ignore_errors=True) swallows that refusal without a word - so
+-    the copies survived in %TEMP% after every scan. A tool that leaves copies of
+-    your cookies behind is worse than no tool, so the handle is closed first and
+-    the removal is verified rather than assumed. Returns True if the directory
+-    is gone."""
++    """Close SQLite and remove only current-process-owned copy identities.
++
++    Unknown paths, substituted roots, extra files, and unsafe platforms are
++    refused. No recursive deletion or restoration is authorized by evidence.
++    The caller reports private leftovers when this returns False.
++    """
+     if con is not None:
+         try:
+             con.close()
+         except Exception:
+             pass
+-    shutil.rmtree(tmpdir, ignore_errors=True)
+-    if os.path.exists(tmpdir):
+-        # One retry: on Windows an antivirus or indexer can hold a file open for
+-        # a moment after the handle closes.
+-        shutil.rmtree(tmpdir, ignore_errors=True)
+-    return not os.path.exists(tmpdir)
++    return discard_owned_snapshot(tmpdir)
++
++
++def _snapshot_source_state(path):
++    """Observe group changes without granting any authority over source paths."""
++    problem = path_problem(path)
++    if problem:
++        raise PermissionError(13, problem, path)
++    try:
++        info = os.lstat(path)
++    except FileNotFoundError:
++        return None
++    if not stat.S_ISREG(info.st_mode):
++        raise PermissionError(13, "snapshot source is not a regular file", path)
++    return (info.st_dev, info.st_ino, info.st_size,
++            getattr(info, "st_mtime_ns", info.st_mtime),
++            getattr(info, "st_ctime_ns", info.st_ctime))
+ 
+ 
+ def _chromium_profile_names(user_data):
+@@ -1346,8 +1379,8 @@ def run(ctx) -> ModuleResult:
+             mark_fail(label, kind, note)
+             return None
+         try:
+-            con = open_evidence_db(tmp)
+-        except sqlite3.Error as exc:
++            con = open_evidence_db(tmp, require_owned=True)
++        except (OSError, sqlite3.Error) as exc:
+             if not _discard_snapshot(os.path.dirname(tmp)):
+                 exc.snapshot_leftover = os.path.dirname(tmp)
+             r.skipped += 1
+@@ -1825,6 +1858,7 @@ def run(ctx) -> ModuleResult:
+         finally:
+             # Close the handle BEFORE removing, or Windows keeps the copy.
+             if not _discard_snapshot(os.path.dirname(tmp), con):
++                mark_fail(label, kind, "temporary snapshot cleanup refused or failed: " + os.path.dirname(tmp))
+                 r.note("could not remove the temporary snapshot of {} - a copy "
+                        "may remain in the system temp directory"
+                        .format(os.path.basename(path)))
+@@ -1890,6 +1924,7 @@ def run(ctx) -> ModuleResult:
+         finally:
+             # Close the handle BEFORE removing, or Windows keeps the copy.
+             if not _discard_snapshot(os.path.dirname(tmp), con):
++                mark_fail(label, kind, "temporary snapshot cleanup refused or failed: " + os.path.dirname(tmp))
+                 r.note("could not remove the temporary snapshot of {} - a copy "
+                        "may remain in the system temp directory"
+                        .format(os.path.basename(path)))
+@@ -1997,6 +2032,7 @@ def run(ctx) -> ModuleResult:
+         finally:
+             # Close the handle BEFORE removing, or Windows keeps the copy.
+             if not _discard_snapshot(os.path.dirname(tmp), con):
++                mark_fail(label, kind, "temporary snapshot cleanup refused or failed: " + os.path.dirname(tmp))
+                 r.note("could not remove the temporary snapshot of {} - a copy "
+                        "may remain in the system temp directory"
+                        .format(os.path.basename(path)))
+diff --git a/scan/zbtriage/ownedtemp.py b/scan/zbtriage/ownedtemp.py
+new file mode 100644
+index 0000000..0784f76
+--- /dev/null
++++ b/scan/zbtriage/ownedtemp.py
+@@ -0,0 +1,179 @@
++"""Narrow cleanup authority for temporary copies created in this process.
++
++No on-disk manifest, prefix, timestamp, scan content, or caller-supplied path
++can grant deletion authority. Unsupported handle-relative platforms retain
++copies and return False so the caller must report the privacy residue.
++"""
++import os
++import stat
++import tempfile
++
++from .localpaths import local_temp_dir, path_problem
++
++
++_LIVE = {}
++
++
++def _identity(info):
++    return (info.st_dev, info.st_ino)
++
++
++def _plain(info, directory=False):
++    expected = stat.S_ISDIR if directory else stat.S_ISREG
++    return (expected(info.st_mode)
++            and not getattr(info, "st_file_attributes", 0) & 0x400
++            and (not hasattr(os, "getuid") or info.st_uid == os.getuid())
++            and (directory or info.st_nlink == 1))
++
++
++class OwnedSnapshot:
++    """Own one private directory and only files created by this invocation."""
++
++    def __init__(self, prefix="bscan_"):
++        base = os.path.realpath(local_temp_dir())
++        if path_problem(base):
++            raise PermissionError("temporary root cannot be safely opened")
++        self.path = tempfile.mkdtemp(prefix=prefix, dir=base)
++        self.info = os.lstat(self.path)
++        self.files = {}
++        self.fd = None
++        self.parent_fd = None
++        self.closed = False
++        self._anchored = (os.name == "posix" and hasattr(os, "O_NOFOLLOW")
++                          and os.open in os.supports_dir_fd
++                          and os.stat in os.supports_dir_fd
++                          and os.unlink in os.supports_dir_fd
++                          and os.rmdir in os.supports_dir_fd)
++        if self._anchored:
++            flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
++            try:
++                self.parent_fd = os.open(os.path.dirname(self.path), flags)
++                self.fd = os.open(os.path.basename(self.path), flags,
++                                  dir_fd=self.parent_fd)
++                if _identity(os.fstat(self.fd)) != _identity(self.info):
++                    raise PermissionError("temporary directory changed before ownership was established")
++            except BaseException:
++                self.release()
++                raise
++        if (not _plain(self.info, directory=True)
++                or os.name == "posix" and self.info.st_mode & 0o077):
++            self.release()
++            raise PermissionError("temporary directory is not private and owned")
++        _LIVE[self.path] = self
++
++    def create_file(self, name):
++        """Mint a private copy; never derive file names from evidence paths."""
++        if (self.closed or name in ("", ".", "..") or os.path.basename(name) != name
++                or "/" in name or "\\" in name or name in self.files):
++            raise PermissionError("invalid or reused temporary-copy name")
++        flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
++        if self._anchored:
++            fd = os.open(name, flags, 0o600, dir_fd=self.fd)
++        else:
++            if path_problem(self.path) or _identity(os.lstat(self.path)) != _identity(self.info):
++                raise PermissionError("temporary directory changed")
++            fd = os.open(os.path.join(self.path, name), flags, 0o600)
++        try:
++            self.remember(os.path.join(self.path, name), os.fstat(fd))
++        except BaseException:
++            os.close(fd)
++            raise
++        return fd
++
++    def remember(self, path, info):
++        """Called with fstat from a newly exclusive-created destination handle."""
++        if self.closed or os.path.dirname(os.path.abspath(path)) != self.path:
++            raise PermissionError("copy does not belong to this temporary directory")
++        name = os.path.basename(path)
++        if name in ("", ".", "..") or not _plain(info):
++            raise PermissionError("temporary copy identity is unsafe")
++        if name in self.files and self.files[name] != _identity(info):
++            raise PermissionError("temporary copy identity was replaced")
++        self.files[name] = _identity(info)
++
++    def validate_file(self, path):
++        """Narrow pathname handoff; this is not a complete same-UID sandbox."""
++        if self.closed or os.path.dirname(os.path.abspath(path)) != self.path:
++            raise PermissionError("snapshot is not live or does not belong to this owner")
++        if path_problem(self.path):
++            raise PermissionError("snapshot root is redirected")
++        root = os.lstat(self.path)
++        if _identity(root) != _identity(self.info) or not _plain(root, True):
++            raise PermissionError("snapshot root identity changed")
++        name = os.path.basename(path)
++        if name not in self.files:
++            raise PermissionError("snapshot file has no current-process ownership record")
++        info = os.lstat(path)
++        if not _plain(info) or _identity(info) != self.files[name]:
++            raise PermissionError("snapshot file identity changed")
++        if self.fd is not None:
++            anchored = os.stat(name, dir_fd=self.fd, follow_symlinks=False)
++            if _identity(anchored) != self.files[name]:
++                raise PermissionError("snapshot handle identity changed")
++
++    def cleanup(self):
++        """Unlink only recorded file identities through anchored directory handles.
++
++        No recursion, restored paths, permission changes, or foreign file deletion.
++        Refuse before deleting anything if the root or any child was replaced,
++        redirected, hard-linked, or populated with an unowned child.
++        """
++        if self.closed:
++            return not os.path.lexists(self.path)
++        if not self._anchored or self.fd is None or self.parent_fd is None:
++            self.release()
++            return False
++        try:
++            root = os.stat(os.path.basename(self.path), dir_fd=self.parent_fd,
++                           follow_symlinks=False)
++            if (_identity(root) != _identity(self.info) or not _plain(root, True)
++                    or root.st_mode & 0o077 or path_problem(self.path)):
++                return False
++            names = os.listdir(self.fd)
++            if set(names) - set(self.files):
++                return False
++            for name in names:
++                info = os.stat(name, dir_fd=self.fd, follow_symlinks=False)
++                if not _plain(info) or _identity(info) != self.files[name]:
++                    return False
++            for name in names:
++                # Recheck every file immediately before unlink. The parent is an
++                # opened owned directory, not a path that can redirect elsewhere.
++                info = os.stat(name, dir_fd=self.fd, follow_symlinks=False)
++                if not _plain(info) or _identity(info) != self.files[name]:
++                    return False
++                os.unlink(name, dir_fd=self.fd)
++            # rmdir is non-recursive; a changed or nonempty path cannot make us
++            # traverse/delete a replacement tree.
++            root = os.stat(os.path.basename(self.path), dir_fd=self.parent_fd,
++                           follow_symlinks=False)
++            if _identity(root) != _identity(self.info):
++                return False
++            os.rmdir(os.path.basename(self.path), dir_fd=self.parent_fd)
++            return not os.path.lexists(self.path)
++        except OSError:
++            return False
++        finally:
++            self.release()
++
++    def release(self):
++        _LIVE.pop(self.path, None)
++        for name in ("fd", "parent_fd"):
++            value = getattr(self, name, None)
++            if value is not None:
++                os.close(value)
++                setattr(self, name, None)
++        self.closed = True
++
++
++def discard_owned_snapshot(path):
++    """Reject unknown paths, including stale/manually fabricated folders."""
++    owner = _LIVE.get(os.path.abspath(os.fspath(path)))
++    return owner.cleanup() if owner is not None else False
++
++
++def validate_owned_snapshot_file(path):
++    owner = _LIVE.get(os.path.dirname(os.path.abspath(os.fspath(path))))
++    if owner is None:
++        raise PermissionError("snapshot has no current-process owner")
++    owner.validate_file(path)
+diff --git a/scan/zbtriage/phoneguide.py b/scan/zbtriage/phoneguide.py
+index 56bd661..052f4d7 100644
+--- a/scan/zbtriage/phoneguide.py
++++ b/scan/zbtriage/phoneguide.py
+@@ -1,3 +1,4 @@
++# Modified downstream by Compass (2026-10-28): ownership and machine-state security boundaries.
+ """Explicit Android acquisition, separate from offline scanning.
+ 
+ Official AndroidQF v1.8.3 release assets, pinned to the publisher's SHA-256
+@@ -332,14 +333,11 @@ def collect_android(destination, recipient_file=None):
+         return folder, 0
+     except (OSError, ValueError, RuntimeError, zipfile.BadZipFile, zlib.error, EOFError, KeyboardInterrupt) as exc:
+         if extracted and work:
+-            # Only remove the new analysis directory created by this invocation.
+-            target, parent = os.path.abspath(extracted), os.path.abspath(work)
+-            if (target != parent and os.path.commonpath((parent, target)) == parent
+-                    and not path_problem(target)):
+-                try:
+-                    shutil.rmtree(target)
+-                except OSError:
+-                    print("Partial analysis files could not be removed: " + target, file=sys.stderr)
++            # Failure-state paths and extracted contents are not deletion grants.
++            # Keep partial evidence rather than recursively trusting a path that
++            # another process could have replaced after extraction began.
++            print("Partial analysis retained; verify ownership and active use before manual cleanup: "
++                  + os.path.abspath(extracted), file=sys.stderr)
+         print("Acquisition stopped: " + str(exc), file=sys.stderr)
+         if work:
+             print("Original or partial acquisition retained; it may contain unencrypted private records: " + work, file=sys.stderr)
+diff --git a/scan/zbtriage/snapshotcopy.py b/scan/zbtriage/snapshotcopy.py
+new file mode 100644
+index 0000000..5f9b50f
+--- /dev/null
++++ b/scan/zbtriage/snapshotcopy.py
+@@ -0,0 +1,408 @@
++"""Conservative descriptor-based copying for short-lived private snapshots.
++
++``path_problem`` is deliberately used as an early locality/redirection check, but
++it is not an OS sandbox and cannot make an ancestor path immune to a concurrent
++same-user rename. On POSIX platforms with the needed descriptor APIs this module
++narrows that race: it holds the source parent open, opens the source entry
++relative to that parent without following its final component, and compares the
++named entry to the opened handle throughout the copy.
++
++For a direct destination path the destination parent is also held and checked.
++A caller that already owns an open private temporary root can use
++``create_destination`` instead, avoiding any destination-root path resolution
++between validation and exclusive creation. Windows' portable ``os.open`` API
++does not provide equivalent no-follow directory-handle operations, so this
++helper fails closed there rather than claiming atomicity it cannot provide.
++"""
++
++import errno
++import os
++import stat
++
++from .localpaths import SF_DATALESS, _CLOUD_ONLY_ATTRIBUTES, path_problem
++
++
++# A fixed, modest read size prevents an attacker-controlled file size from
++# becoming an unbounded allocation. The caller's remaining-byte allowance is
++# also applied to every os.read call.
++_SC_COPY_CHUNK_BYTES = 64 * 1024
++# Capture the platform capability at import time. Tests and callers may wrap
++# os.open to model a permission failure; that must not change the platform's
++# already-established openat capability.
++_SC_OPEN_SUPPORTS_DIR_FD = os.open in os.supports_dir_fd
++_SC_STAT_SUPPORTS_DIR_FD = os.stat in os.supports_dir_fd
++
++
++def copy_snapshot_file(source, destination, remaining_bytes, on_created=None,
++                       create_destination=None):
++    """Copy one stable ordinary source to a new private destination.
++
++    ``source`` and ``destination`` must be absolute text paths. The source must
++    be a non-link, non-reparse, non-cloud-only regular file with exactly one
++    link. The destination is created only once with ``O_CREAT | O_EXCL`` and
++    mode 0600; an existing direct destination is never overwritten.
++
++    In the direct path form, ``on_created(destination, stat_result)`` is called
++    after the private destination descriptor exists but before source bytes are
++    written. A caller can therefore record the exact ``st_dev``/``st_ino`` for
++    cleanup even if a subsequent write fails.
++
++    An owner of an already-open private destination directory may instead pass
++    ``create_destination``. It is a no-argument trusted callback that returns a
++    newly, exclusively created private destination descriptor and records its
++    cleanup identity before returning. This form is intentionally mutually
++    exclusive with ``on_created`` and does not re-resolve the destination root
++    to create or check the output name.
++
++    ``remaining_bytes`` is both the initial file-size ceiling and a ceiling
++    applied to every read. The return value is the copied byte count. This
++    helper never deletes a failed partial destination; its registered owner must
++    remove it by identity.
++    """
++    source = _sc_absolute_text_path(source, "source")
++    destination = _sc_absolute_text_path(destination, "destination")
++    if not isinstance(remaining_bytes, int) or isinstance(remaining_bytes, bool):
++        raise TypeError("remaining_bytes must be an integer")
++    if remaining_bytes < 0:
++        raise ValueError("remaining_bytes must not be negative")
++    if _sc_same_path(source, destination):
++        raise ValueError("source and destination must be different paths")
++    if on_created is not None and not callable(on_created):
++        raise TypeError("on_created must be callable or None")
++    if create_destination is not None and not callable(create_destination):
++        raise TypeError("create_destination must be callable or None")
++    if on_created is not None and create_destination is not None:
++        raise ValueError("on_created and create_destination cannot both be used")
++
++    _sc_require_safe_posix_openat()
++
++    # This is an early refusal of known redirections/cloud paths, not a claim of
++    # atomic ancestry validation. Descriptor checks below remain required.
++    _sc_check_path_problem(source)
++    _sc_check_path_problem(destination)
++
++    source_parent_path, source_name = _sc_parent_and_name(source, "source")
++    destination_parent_path, destination_name = _sc_parent_and_name(destination,
++                                                                    "destination")
++    source_parent_fd = None
++    destination_parent_fd = None
++    source_fd = None
++    destination_fd = None
++    copied = 0
++    try:
++        source_parent_fd, source_parent_sc_identity = _sc_open_stable_parent(
++            source_parent_path, "source parent")
++        if create_destination is None:
++            destination_parent_fd, destination_parent_sc_identity = _sc_open_stable_parent(
++                destination_parent_path, "destination parent")
++        else:
++            destination_parent_sc_identity = None
++
++        # lstat the name from the held parent before opening it. The fstat on
++        # the resulting descriptor must match this state and every later state,
++        # so a replacement before/during open fails rather than being copied.
++        source_name_before = _sc_stat_at(source_parent_fd, source_name)
++        _sc_require_safe_source_stat(source_name_before, source)
++        source_fd = os.open(source_name, _sc_source_open_flags(),
++                            dir_fd=source_parent_fd)
++        source_handle_before = os.fstat(source_fd)
++        _sc_require_safe_source_stat(source_handle_before, source)
++        if _sc_source_snapshot(source_name_before) != _sc_source_snapshot(source_handle_before):
++            _sc_changed(source, "path and opened handle did not identify the same file")
++
++        _sc_assert_source_stable(source_fd, source_parent_fd, source_name, source,
++                              source_handle_before, source_parent_path,
++                              source_parent_sc_identity)
++        if create_destination is None:
++            _sc_assert_parent_stable(destination_parent_fd, destination_parent_path,
++                                  destination_parent_sc_identity, "destination parent")
++
++        source_size = source_handle_before.st_size
++        if source_size > remaining_bytes:
++            raise OSError(errno.EFBIG,
++                          "source is {} bytes, over the remaining {}-byte snapshot limit".format(
++                              source_size, remaining_bytes), source)
++
++        if create_destination is None:
++            # O_EXCL makes this an atomic "new name only" operation. O_NOFOLLOW
++            # retains an explicit no-link policy for the final component.
++            destination_fd = os.open(destination_name, _sc_destination_open_flags(),
++                                     0o600, dir_fd=destination_parent_fd)
++            # Register immediately after exclusive creation, before any source
++            # byte is read or written. The 0600 creation mode may be further
++            # restricted by umask, never broadened; fchmod below makes it exact.
++            if on_created is not None:
++                on_created(destination, os.fstat(destination_fd))
++        else:
++            destination_fd = create_destination()
++            if not isinstance(destination_fd, int) or isinstance(destination_fd, bool):
++                raise TypeError("create_destination must return an open file descriptor")
++
++        # Only this newly-created descriptor is chmodded; the source is never
++        # chmodded, elevated, restored, or otherwise modified.
++        os.fchmod(destination_fd, 0o600)
++        destination_initial = os.fstat(destination_fd)
++        _sc_require_private_destination_stat(destination_initial, destination)
++        if create_destination is None:
++            _sc_assert_destination_stable(destination_fd, destination_parent_fd,
++                                       destination_name, destination,
++                                       destination_initial)
++        else:
++            _sc_assert_destination_handle_stable(destination_fd, destination,
++                                              destination_initial)
++
++        # The requested read is capped by the initial stable source size and
++        # remaining allowance. It cannot temporarily consume newly grown bytes.
++        while copied < source_size:
++            _sc_assert_source_stable(source_fd, source_parent_fd, source_name, source,
++                                  source_handle_before, source_parent_path,
++                                  source_parent_sc_identity)
++            if create_destination is None:
++                _sc_assert_parent_stable(destination_parent_fd, destination_parent_path,
++                                      destination_parent_sc_identity, "destination parent")
++            expected_left = source_size - copied
++            allowed_left = remaining_bytes - copied
++            read_size = min(_SC_COPY_CHUNK_BYTES, expected_left, allowed_left)
++            if read_size <= 0:
++                raise OSError(errno.EFBIG,
++                              "remaining snapshot limit was reached during copy", source)
++            data = os.read(source_fd, read_size)
++            if not data:
++                _sc_changed(source, "file shrank while it was being copied")
++            # os.read cannot normally return more than requested. Treat a
++            # mocked/nonstandard result as a security failure instead of writing
++            # a byte beyond either validated boundary.
++            if len(data) > read_size or len(data) > expected_left or len(data) > allowed_left:
++                _sc_changed(source, "copy attempted to exceed its validated byte limit")
++            _sc_write_all(destination_fd, data, destination)
++            copied += len(data)
++            _sc_assert_source_stable(source_fd, source_parent_fd, source_name, source,
++                                  source_handle_before, source_parent_path,
++                                  source_parent_sc_identity)
++            if create_destination is None:
++                _sc_assert_destination_stable(destination_fd, destination_parent_fd,
++                                           destination_name, destination,
++                                           destination_initial)
++            else:
++                _sc_assert_destination_handle_stable(destination_fd, destination,
++                                                  destination_initial)
++
++        # A final source check catches a change that happened just after the
++        # final expected chunk, including a late growth or path replacement.
++        _sc_assert_source_stable(source_fd, source_parent_fd, source_name, source,
++                              source_handle_before, source_parent_path,
++                              source_parent_sc_identity)
++        if create_destination is None:
++            _sc_assert_parent_stable(destination_parent_fd, destination_parent_path,
++                                  destination_parent_sc_identity, "destination parent")
++            _sc_assert_destination_stable(destination_fd, destination_parent_fd,
++                                       destination_name, destination,
++                                       destination_initial)
++        else:
++            _sc_assert_destination_handle_stable(destination_fd, destination,
++                                              destination_initial)
++        return copied
++    finally:
++        _sc_close_quietly(destination_fd)
++        _sc_close_quietly(source_fd)
++        _sc_close_quietly(destination_parent_fd)
++        _sc_close_quietly(source_parent_fd)
++
++
++def _sc_absolute_text_path(value, label):
++    """Return an absolute text path without accepting an ambient-CWD path."""
++    value = os.fspath(value)
++    if not isinstance(value, str):
++        raise TypeError("{} must be a text path".format(label))
++    if not os.path.isabs(value):
++        raise ValueError("{} path must be absolute".format(label))
++    return value
++
++
++def _sc_same_path(first, second):
++    """Compare lexical paths only; descriptor comparisons establish identity."""
++    return os.path.normcase(os.path.normpath(first)) == os.path.normcase(os.path.normpath(second))
++
++
++def _sc_check_path_problem(path):
++    problem = path_problem(path)
++    if problem:
++        raise PermissionError(errno.EPERM, problem, path)
++
++
++def _sc_parent_and_name(path, label):
++    parent, name = os.path.split(path)
++    if not parent or not name or name in (os.curdir, os.pardir):
++        raise ValueError("{} path must name a file below a parent directory".format(label))
++    return parent, name
++
++
++def _sc_require_safe_posix_openat():
++    """Fail closed where portable Python cannot make the no-follow claim."""
++    required_flags = ("O_NOFOLLOW", "O_DIRECTORY", "O_NONBLOCK")
++    if os.name == "nt" or any(not hasattr(os, flag) for flag in required_flags):
++        raise OSError(errno.ENOTSUP,
++                      "safe no-follow descriptor snapshot copying is unavailable on this platform")
++    if not _SC_OPEN_SUPPORTS_DIR_FD or not _SC_STAT_SUPPORTS_DIR_FD:
++        raise OSError(errno.ENOTSUP,
++                      "safe directory-descriptor snapshot copying is unavailable on this platform")
++
++
++def _sc_parent_open_flags():
++    flags = os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW
++    if hasattr(os, "O_CLOEXEC"):
++        flags |= os.O_CLOEXEC
++    return flags
++
++
++def _sc_source_open_flags():
++    # O_NONBLOCK prevents a FIFO swapped in after lstat from blocking the scanner.
++    flags = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK
++    if hasattr(os, "O_CLOEXEC"):
++        flags |= os.O_CLOEXEC
++    return flags
++
++
++def _sc_destination_open_flags():
++    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW
++    if hasattr(os, "O_CLOEXEC"):
++        flags |= os.O_CLOEXEC
++    return flags
++
++
++def _sc_open_stable_parent(path, label):
++    """Open one non-link directory and bind its final path component to its fd."""
++    before = os.lstat(path)
++    if not stat.S_ISDIR(before.st_mode):
++        _sc_refuse(path, "{} is not a real directory".format(label))
++    _sc_require_nonredirected_stat(before, path)
++    fd = os.open(path, _sc_parent_open_flags())
++    try:
++        opened = os.fstat(fd)
++        if not stat.S_ISDIR(opened.st_mode):
++            _sc_refuse(path, "{} opened as a non-directory".format(label))
++        if _sc_identity(before) != _sc_identity(opened):
++            _sc_changed(path, "{} changed while it was opened".format(label))
++        after = os.lstat(path)
++        if _sc_identity(opened) != _sc_identity(after):
++            _sc_changed(path, "{} changed while it was opened".format(label))
++        return fd, _sc_identity(opened)
++    except BaseException:
++        _sc_close_quietly(fd)
++        raise
++
++
++def _sc_assert_parent_stable(parent_fd, parent_path, expected_sc_identity, label):
++    opened = os.fstat(parent_fd)
++    named = os.lstat(parent_path)
++    if not stat.S_ISDIR(opened.st_mode) or not stat.S_ISDIR(named.st_mode):
++        _sc_changed(parent_path, "{} stopped naming a directory".format(label))
++    if _sc_identity(opened) != expected_sc_identity or _sc_identity(named) != expected_sc_identity:
++        _sc_changed(parent_path, "{} was replaced while copying".format(label))
++
++
++def _sc_stat_at(parent_fd, name):
++    return os.stat(name, dir_fd=parent_fd, follow_symlinks=False)
++
++
++def _sc_assert_source_stable(source_fd, parent_fd, name, source_path, expected,
++                          parent_path, parent_sc_identity):
++    """Require all mandated source state values on path and open descriptor."""
++    _sc_assert_parent_stable(parent_fd, parent_path, parent_sc_identity, "source parent")
++    opened = os.fstat(source_fd)
++    named = _sc_stat_at(parent_fd, name)
++    # Check link/reparse/type before identity comparison, but delay the link
++    # count until after it. A replace unlinks the old still-open descriptor
++    # (nlink becomes zero); that is a replacement, not a pre-existing hardlink.
++    _sc_require_safe_source_stat(opened, source_path, check_nlink=False)
++    _sc_require_safe_source_stat(named, source_path, check_nlink=False)
++    if _sc_source_snapshot(opened) != _sc_source_snapshot(expected):
++        _sc_changed(source_path, "opened file changed while it was being copied")
++    if _sc_source_snapshot(named) != _sc_source_snapshot(expected):
++        _sc_changed(source_path, "path was replaced or changed while it was being copied")
++    _sc_require_safe_source_stat(opened, source_path)
++    _sc_require_safe_source_stat(named, source_path)
++
++
++def _sc_require_safe_source_stat(info, path, check_nlink=True):
++    """Reject entries that must never be opened/read as browser evidence."""
++    _sc_require_nonredirected_stat(info, path)
++    if stat.S_ISLNK(info.st_mode):
++        _sc_refuse(path, "symlink was not opened")
++    if not stat.S_ISREG(info.st_mode):
++        _sc_refuse(path, "special filesystem entry was not opened")
++    # Browser evidence should not arrive from an alternate hard-link name that
++    # another process can replace independently from the inspected pathname.
++    if check_nlink and getattr(info, "st_nlink", 1) != 1:
++        _sc_refuse(path, "hard-linked file was not opened")
++
++
++def _sc_require_nonredirected_stat(info, path):
++    attributes = getattr(info, "st_file_attributes", 0)
++    if attributes & _CLOUD_ONLY_ATTRIBUTES or getattr(info, "st_flags", 0) & SF_DATALESS:
++        _sc_refuse(path, "cloud-only file was not opened")
++    if attributes & 0x400:
++        _sc_refuse(path, "reparse point was not opened")
++
++
++def _sc_require_private_destination_stat(info, path):
++    if not stat.S_ISREG(info.st_mode):
++        _sc_refuse(path, "new destination is not a regular file")
++    if getattr(info, "st_nlink", 1) != 1:
++        _sc_refuse(path, "new destination gained a hard link")
++    if stat.S_IMODE(info.st_mode) != 0o600:
++        _sc_refuse(path, "new destination is not private mode 0600")
++
++
++def _sc_assert_destination_stable(destination_fd, parent_fd, name, path, expected):
++    opened = os.fstat(destination_fd)
++    named = _sc_stat_at(parent_fd, name)
++    _sc_require_private_destination_stat(opened, path)
++    _sc_require_private_destination_stat(named, path)
++    if _sc_identity(opened) != _sc_identity(expected) or _sc_identity(named) != _sc_identity(expected):
++        _sc_changed(path, "destination name was replaced while copying")
++
++
++def _sc_assert_destination_handle_stable(destination_fd, path, expected):
++    """Check the exact descriptor from an already-anchored trusted owner."""
++    opened = os.fstat(destination_fd)
++    _sc_require_private_destination_stat(opened, path)
++    if _sc_identity(opened) != _sc_identity(expected):
++        _sc_changed(path, "destination descriptor was replaced while copying")
++
++
++def _sc_write_all(fd, data, path):
++    offset = 0
++    while offset < len(data):
++        wrote = os.write(fd, data[offset:])
++        if wrote is None or wrote <= 0 or wrote > len(data) - offset:
++            raise OSError(errno.EIO, "could not write private snapshot", path)
++        offset += wrote
++
++
++def _sc_identity(info):
++    return info.st_dev, info.st_ino
++
++
++def _sc_source_snapshot(info):
++    """The exact stable attributes compared on source path and handle."""
++    return (info.st_dev, info.st_ino, info.st_size,
++            getattr(info, "st_mtime_ns", int(info.st_mtime * 1000000000)),
++            getattr(info, "st_ctime_ns", int(info.st_ctime * 1000000000)))
++
++
++def _sc_changed(path, reason):
++    raise OSError(errno.EBUSY, reason, path)
++
++
++def _sc_refuse(path, reason):
++    raise PermissionError(errno.EPERM, reason, path)
++
++
++def _sc_close_quietly(fd):
++    if fd is None:
++        return
++    try:
++        os.close(fd)
++    except OSError:
++        pass
+diff --git a/scan/zbtriage/workflow.py b/scan/zbtriage/workflow.py
+index 87ac82c..7de6c15 100644
+--- a/scan/zbtriage/workflow.py
++++ b/scan/zbtriage/workflow.py
+@@ -1,3 +1,4 @@
++# Modified downstream by Compass (2026-10-28): ownership and machine-state security boundaries.
+ """Shared report-saving and interactive follow-up for both entry points.
+ 
+ The follow-up operates only on the completed report and explicitly selected
+@@ -164,8 +165,8 @@ def workflow_output_guard(args, path, document=None):
+ def workflow_before_scan(args, iocs):
+     """Privacy housekeeping just before a scan starts, for both entry points.
+ 
+-    Removes private temporary copies an earlier scan left behind when it was
+-    killed or crashed (recorded on `iocs.housekeeping` for the report), and
++    Reports possible private temporary copies without trusting their names or
++    timestamps as deletion authority (recorded on `iocs.housekeeping`), and
+     says when a report is about to be saved in a folder that OneDrive or
+     iCloud uploads (often a Desktop or Documents folder)."""
+     iocs.housekeeping = sweep_stale_temp()
+@@ -173,8 +174,9 @@ def workflow_before_scan(args, iocs):
+         print("Removed {} leftover temporary folder(s) from an earlier scan that did not "
+               "finish.".format(iocs.housekeeping["removed"]), file=sys.stderr)
+     for path in iocs.housekeeping["failed"]:
+-        print("WARNING: could not remove a leftover temporary folder from an earlier scan; it "
+-              "may hold private copies. Delete it yourself: {}".format(path), file=sys.stderr)
++        print("WARNING: retained an unverified temporary-folder candidate; it may contain "
++              "private data or belong to another process. Confirm ownership and that no scan "
++              "is using it before considering manual cleanup: {}".format(path), file=sys.stderr)
+     for key in ("report", "json", "share_json", "evidence_bundle"):
+         path = getattr(args, key, None)
+         folder = synced_folder(path) if path else ""

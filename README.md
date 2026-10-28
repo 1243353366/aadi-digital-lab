@@ -2,6 +2,14 @@
 
 > Research, OSINT, AI, and Systems Thinking.
 
+> **Security review branch:** `security/scanner-recovery-trust-boundaries`
+> hardens scanner cleanup, changing-machine snapshots, and indicator trust.
+> This is not a hosting deployment or a change to `main`. Read the
+> [security changelog](scanner/SECURITY-CHANGELOG.md) and
+> [before/after demonstration and platform limits](scanner/SECURITY-DEMONSTRATION.md).
+> The hardened snapshot path fails closed on unsupported platforms; native
+> Windows guarantees are not certified by the Linux fixture tests.
+
 A production-ready blog + research dashboard. One self-contained Cloudflare
 Worker serves the static frontend and the API, with a D1 (SQLite) database,
 admin dashboard, and GitHub-powered console telemetry. Zero build step, zero

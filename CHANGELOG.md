@@ -1,5 +1,13 @@
 # Changelog — Aadi's Digital Lab
 
+## [Security branch] — 2026-10-28 — Recovery, machine-state, and indicator trust
+
+Changes are isolated to `security/scanner-recovery-trust-boundaries`; `main` and hosting are not changed. Added ownership-bound non-recursive cleanup of current-process scanner copies, non-destructive reporting of stale candidates, bounded descriptor-aware browser snapshots, group-state change warnings, and read-only SQLite opens that cannot create vanished evidence. Partial acquisition records are retained on failure. No system rollback/remediation capability is introduced.
+
+Indicator update/scan acceptance is anchored to approved source/revision/hash records in the trusted application release, not a digest or approval assertion from mutable source/cache data. Latest/shrink options do not authorize unapproved content. The package manifest is separately approved by the launcher; reproducible vendoring records the upstream commit and local patch digest. Integrity is not claimed to establish publisher authenticity or semantic correctness.
+
+Added synthetic adversarial tests, a before/after cleanup demonstration, a dedicated no-scan CI job, and retained all original license/NOTICE and author/source credits. See [security changes](scanner/SECURITY-CHANGELOG.md) and [demonstration and limits](scanner/SECURITY-DEMONSTRATION.md). Native Windows protections are not certified by Linux tests; unsupported hardened snapshot operations fail closed and retained private copies are reported.
+
 ## [1.5.1] — 2026-10-28 — Separate scanner-on-scanner audit and credits
 
 Added `python3 scanner/audit_scanner.py`: package integrity plus 42 synthetic matcher, evidence, and coverage checks, with a separate audit report and no device scanning. The original live scanner, indicator bytes, scan results, and website interpretation are unchanged. Added five audit safety regressions to the existing six launcher tests and credited verified authors, upstream contributors, research publishers, and optional rule authors in the root README. The audit does not claim to eliminate detection errors or certify a device as safe.

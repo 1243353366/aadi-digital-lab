@@ -1,6 +1,8 @@
 # Scanner-on-scanner audit
 
-The original device scan is unchanged. The new `python3 scanner/audit_scanner.py` command audits the packaged scanner's source integrity and synthetic regression fixtures; it does not scan a device, amend indicators, normalize original verdicts, or override a scan result.
+**Security-branch note:** the observations below record the original audit-only release. This branch additionally carries the explicit downstream security patch described in [SECURITY-CHANGELOG.md](SECURITY-CHANGELOG.md). Its approved manifest records both the original upstream commit and local patch digest; it must not be described as byte-identical unmodified upstream. Indicator/rule bytes and evidence-grade meanings are retained. Unsafe machine states and cleanup failures can now produce additional gaps. See the [security demonstration](SECURITY-DEMONSTRATION.md).
+
+The separate `python3 scanner/audit_scanner.py` command audits the approved package's source integrity and synthetic regression fixtures; it does not scan a device, amend indicators, normalize original verdicts, or override a scan result.
 
 ## What was checked
 

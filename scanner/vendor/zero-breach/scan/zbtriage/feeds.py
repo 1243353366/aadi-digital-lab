@@ -1,3 +1,4 @@
+# Modified downstream by Compass (2026-10-28): approved feed trust and bounded response streaming.
 """Official published indicator sources, and the `--update` command.
 
 The scan itself never touches the network (netguard.no_network). Updating the
@@ -10,9 +11,10 @@ source at the user's request (as MVT itself does) rather than redistributed.
 Safety rules, each enforced in code and pinned by tests/test_feeds.py:
   - only https://raw.githubusercontent.com/<allow-listed owner>/... ; a redirect
     anywhere else is refused;
-  - by default each source is downloaded at the commit pinned for this release
+  - each source is downloaded only at the commit pinned for this release
     (FEED_PINS), and must match the SHA-256 this release recorded for it
-    (FEED_FILE_SHA256); `--update --latest` follows the upstream branch instead;
+    (FEED_FILE_SHA256); source descriptors and cache metadata cannot grant
+    a new origin, revision, or digest;
   - every download is size-capped, must not be an HTML page, and must parse
     into at least one usable indicator BEFORE it replaces the cached copy - a
     failed download keeps the previous good copy;
@@ -419,10 +421,26 @@ def _fetch(url: str) -> bytes:
     # A generic label: the sources' servers need not learn that this is a spyware check.
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     with opener.open(req, timeout=TIMEOUT_S) as resp:
-        data = resp.read(MAX_DOWNLOAD + 1)
-    if len(data) > MAX_DOWNLOAD:
-        raise IocError("download larger than {:,} bytes - refused".format(MAX_DOWNLOAD))
-    return data
+        headers = getattr(resp, "headers", {})
+        declared = headers.get("Content-Length")
+        if declared is not None:
+            try:
+                length = int(declared)
+            except (ValueError, TypeError):
+                raise IocError("invalid download Content-Length")
+            if length < 0 or length > MAX_DOWNLOAD:
+                raise IocError("download larger than {:,} bytes or invalid length - refused".format(MAX_DOWNLOAD))
+        if headers.get("Content-Encoding", "identity").lower() not in ("", "identity"):
+            raise IocError("encoded indicator downloads are not supported")
+        data = bytearray()
+        while True:
+            chunk = resp.read(min(65536, MAX_DOWNLOAD - len(data) + 1))
+            if not chunk:
+                break
+            if len(data) + len(chunk) > MAX_DOWNLOAD:
+                raise IocError("download larger than {:,} bytes - refused".format(MAX_DOWNLOAD))
+            data.extend(chunk)
+    return bytes(data)
 
 
 def _certificate_problem(exc) -> bool:
@@ -497,6 +515,39 @@ def _write_manifest(cache: str, entries: Dict[str, Dict[str, object]]) -> None:
     os.replace(tmp, final)
 
 
+def _release_approved_source(src: Dict[str, str]) -> Tuple[Dict[str, str], str, str, str]:
+    """Return a source's application-shipped descriptor and immutable anchors.
+
+    The optional ``sources`` argument selects which built-in sources to update;
+    it cannot add a source or alter a source's descriptor.  The source catalogue
+    and the release pins are the trust root, not a cache or download manifest.
+    """
+    if not isinstance(src, dict) or not isinstance(src.get("id"), str):
+        raise IocError("refused: source descriptor has no valid source id")
+    sid = src["id"]
+    matches = [candidate for candidate in SOURCES
+               if isinstance(candidate, dict) and candidate.get("id") == sid]
+    if len(matches) != 1:
+        raise IocError("refused: {!r} is not a canonical release-approved source".format(sid))
+    canonical = matches[0]
+    if src != canonical:
+        raise IocError("refused: source descriptor for {!r} does not match the "
+                       "release-approved descriptor".format(sid))
+    repo = canonical.get("repo")
+    pin = FEED_PINS.get(repo)
+    if not (isinstance(pin, str) and len(pin) == 40 and
+            all(c in "0123456789abcdef" for c in pin)):
+        raise IocError("refused: {!r} has no release-approved commit pin".format(sid))
+    expected = FEED_FILE_SHA256.get(sid)
+    if not (isinstance(expected, str) and len(expected) == 64 and
+            all(c in "0123456789abcdef" for c in expected)):
+        raise IocError("refused: {!r} has no release-approved SHA-256 digest".format(sid))
+    pinned = _pinned_url(canonical)
+    if not (url_allowed(canonical.get("url")) and pinned and url_allowed(pinned)):
+        raise IocError("refused: {!r} has an invalid release-approved origin".format(sid))
+    return canonical, pin, expected, pinned
+
+
 def update(cache: Optional[str] = None, sources: Optional[List[Dict[str, str]]] = None,
            fetch: Callable[[str], bytes] = _fetch,
            emit: Callable[[str], None] = lambda s: None,
@@ -505,8 +556,15 @@ def update(cache: Optional[str] = None, sources: Optional[List[Dict[str, str]]] 
     """Download every source; keep the previous copy of any that fails.
     Returns a summary: per source ok / unchanged / failed, with counts.
 
-    By default a source is fetched at this release's pinned commit and must
-    match the SHA-256 recorded for it; `latest` follows the upstream branch."""
+    Every replacement is fetched at this release's pinned commit and must
+    match the SHA-256 recorded for it. Source descriptors and manifests cannot
+    authorize a new origin, revision, or digest."""
+    if latest:
+        raise IocError("--latest cannot bypass release-approved indicator pins; "
+                       "install a reviewed release with updated pins instead")
+    if accept_shrink:
+        raise IocError("--accept-shrink cannot authorize indicator content; "
+                       "install a reviewed release with updated pins instead")
     cache = cache or default_cache_dir()
     problem = path_problem(os.path.abspath(cache))
     if problem:
@@ -514,20 +572,19 @@ def update(cache: Optional[str] = None, sources: Optional[List[Dict[str, str]]] 
     os.makedirs(cache, exist_ok=True)
     manifest = read_manifest(cache)
     results = []
-    for src in (sources if sources is not None else SOURCES):
-        name = src["id"] + _EXT[src["format"]]
-        pinned = None if latest else _pinned_url(src)
-        url = pinned or src["url"]
-        expected = FEED_FILE_SHA256.get(src["id"]) if pinned else None
-        revision = FEED_PINS[src["repo"]] if pinned else ("branch head" if latest else "unpinned")
-        entry = {"id": src["id"], "name": src["name"], "url": url, "revision": revision}
+    for supplied in (sources if sources is not None else SOURCES):
+        sid = supplied.get("id") if isinstance(supplied, dict) and isinstance(supplied.get("id"), str) else "unknown"
+        entry = {"id": sid, "name": supplied.get("name", sid) if isinstance(supplied, dict) else sid}
         try:
+            src, revision, expected, url = _release_approved_source(supplied)
+            name = src["id"] + _EXT[src["format"]]
+            entry.update(name=src["name"], url=url, revision=revision)
             final = _feed_local_path(cache, name)
             data = fetch(url)
             if _looks_like_html(data):
                 raise IocError("got a web page, not an indicator file")
             digest = _feed_sha256(data)
-            if expected and digest != expected:
+            if digest != expected:
                 raise IocError("the file at the pinned revision does not match the SHA-256 recorded "
                                "in this release; the previous copy was kept")
             old = manifest.get(src["id"])
@@ -556,22 +613,11 @@ def update(cache: Optional[str] = None, sources: Optional[List[Dict[str, str]]] 
                 # tampered upstream file) must not silently make scans look clean:
                 # keep the previous copy and report why. Measured against the
                 # highest count this cache has held, so repeated smaller drops
-                # cannot empty a source either. A file matching the hash this
-                # release recorded was reviewed, so it resets the measure.
+                # cannot empty a source either. A matching release hash was
+                # reviewed, so it resets the measure.
                 counts = [old.get(k) for k in ("indicators", "peak_indicators")] if isinstance(old, dict) else []
                 peak = max([c for c in counts if type(c) is int], default=0)
-                reviewed = bool(expected)
-                if not reviewed and peak > 0 and (
-                        len(parsed) == 0 or (peak >= 20 and len(parsed) < peak // 2)):
-                    if src["id"] not in (accept_shrink or ()):
-                        raise IocError("indicator count fell from {} to {} (measured against the most this cache "
-                                       "has held); the previous copy was kept. Check the source; if the change is "
-                                       "genuine, accept it with --update --accept-shrink {}".format(
-                                           peak, len(parsed), src["id"]))
-                    emit("[!] {}: indicator count fell from {} to {}; accepted as requested".format(
-                        src["name"], peak, len(parsed)))
-                    reviewed = True
-                peak = len(parsed) if reviewed else max(peak, len(parsed))
+                peak = len(parsed)
             except Exception:
                 os.unlink(tmp)
                 raise
@@ -595,8 +641,8 @@ def update(cache: Optional[str] = None, sources: Optional[List[Dict[str, str]]] 
                 _write_manifest(cache, manifest)
                 raise IocError(_certificate_help())
             entry.update(status="failed", error=str(exc)[:300],
-                         kept_previous=src["id"] in manifest)
-            emit("[!] {} failed: {}".format(src["name"], str(exc)[:160]))
+                         kept_previous=sid in manifest)
+            emit("[!] {} failed: {}".format(entry["name"], str(exc)[:160]))
         results.append(entry)
     _write_manifest(cache, manifest)
     failed = [r for r in results if r["status"] == "failed"]
@@ -612,9 +658,9 @@ def cached_sets(cache: Optional[str] = None,
     report. A file whose SHA-256 no longer matches the manifest is REFUSED (it
     was edited or corrupted after download) and reported, never scanned.
 
-    A file that is not the copy pinned for this release is refused too, unless
-    the scan itself was started with `latest` (--latest). The manifest cannot
-    grant that: whoever could edit the file could also edit the manifest."""
+    A file that is not the copy approved for this release is refused, including
+    when the scan is started with `latest`. The manifest cannot grant that:
+    whoever could edit the file could also edit the manifest."""
     cache = cache or default_cache_dir()
     sets: List[IocSet] = []
     status = {"cache": cache, "downloaded": False, "loaded": [],
@@ -633,6 +679,11 @@ def cached_sets(cache: Optional[str] = None,
         if src is None:
             status["refused"].append({"id": sid, "reason": "not a known source"})
             continue
+        try:
+            _canonical, _revision, expected, _url = _release_approved_source(src)
+        except IocError as exc:
+            status["refused"].append({"id": sid, "reason": str(exc)})
+            continue
         # The source catalogue, never the manifest, chooses the file to open.
         name = sid + _EXT[src["format"]]
         if not isinstance(meta, dict) or meta.get("file") != name:
@@ -648,17 +699,16 @@ def cached_sets(cache: Optional[str] = None,
         except OSError:
             status["missing"].append(sid)
             continue
-        if _feed_sha256(data) != meta.get("sha256"):
+        digest = _feed_sha256(data)
+        if digest != meta.get("sha256"):
             status["refused"].append({"id": sid, "reason": "file changed since download"})
             continue
         # Judged by content against the hash the release itself carries, which
         # the cache cannot rewrite - never by the manifest's revision field.
-        expected = FEED_FILE_SHA256.get(sid)
-        pinned_here = bool(expected) and _feed_sha256(data) == expected
-        if expected and not pinned_here and not latest:
-            status["refused"].append({"id": sid, "reason": "not the copy pinned for this release; "
-                                                           "update the indicator lists, or scan "
-                                                           "with --latest to use newer lists"})
+        pinned_here = digest == expected
+        if not pinned_here:
+            status["refused"].append({"id": sid, "reason": "not the copy approved for this release; "
+                                                           "install a reviewed release with updated pins"})
             continue
         try:
             loaded = _load_source_file(src, path)

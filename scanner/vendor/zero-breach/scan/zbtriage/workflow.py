@@ -1,3 +1,4 @@
+# Modified downstream by Compass (2026-10-28): ownership and machine-state security boundaries.
 """Shared report-saving and interactive follow-up for both entry points.
 
 The follow-up operates only on the completed report and explicitly selected
@@ -164,8 +165,8 @@ def workflow_output_guard(args, path, document=None):
 def workflow_before_scan(args, iocs):
     """Privacy housekeeping just before a scan starts, for both entry points.
 
-    Removes private temporary copies an earlier scan left behind when it was
-    killed or crashed (recorded on `iocs.housekeeping` for the report), and
+    Reports possible private temporary copies without trusting their names or
+    timestamps as deletion authority (recorded on `iocs.housekeeping`), and
     says when a report is about to be saved in a folder that OneDrive or
     iCloud uploads (often a Desktop or Documents folder)."""
     iocs.housekeeping = sweep_stale_temp()
@@ -173,8 +174,9 @@ def workflow_before_scan(args, iocs):
         print("Removed {} leftover temporary folder(s) from an earlier scan that did not "
               "finish.".format(iocs.housekeeping["removed"]), file=sys.stderr)
     for path in iocs.housekeeping["failed"]:
-        print("WARNING: could not remove a leftover temporary folder from an earlier scan; it "
-              "may hold private copies. Delete it yourself: {}".format(path), file=sys.stderr)
+        print("WARNING: retained an unverified temporary-folder candidate; it may contain "
+              "private data or belong to another process. Confirm ownership and that no scan "
+              "is using it before considering manual cleanup: {}".format(path), file=sys.stderr)
     for key in ("report", "json", "share_json", "evidence_bundle"):
         path = getattr(args, key, None)
         folder = synced_folder(path) if path else ""

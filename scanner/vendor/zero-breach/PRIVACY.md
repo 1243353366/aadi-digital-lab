@@ -45,7 +45,9 @@ Zero Breach Toolkit runs entirely on your computer.
 - An offline scan does not reconfigure your system, quarantine evidence or install software.
   The separate acquisition command downloads its collector and writes the requested collection.
 - Temporary snapshots can contain complete browser database bytes, including data not queried
-  by the scanner. They are removed after use; interrupted runs or cleanup failures can leave
+  by the scanner. Current-process copies are removed only when their ownership and identities
+  can be verified with supported handle-relative operations; refusal, unsupported platforms,
+  interrupted runs or cleanup failures can leave
   copies in the system temporary directory. The standalone scanner also writes temporary
   embedded indicator files. Requested reports remain until you remove them.
 
@@ -57,8 +59,8 @@ Phone-backup passwords are entered through a private terminal prompt, not comman
 arguments, environment variables or report fields. They are used only to read the selected
 local backup. Python cannot guarantee secure erasure of password or plaintext memory.
 The iPhone reader creates temporary plaintext database copies on local disk
-and removes them after use; interruption or cleanup failures can leave copies. No optional
-snapshot retention was added. Acquisition and archive extraction are separate from scanning, described by `--phone-guide`
+and attempts ownership-bound cleanup after use; interruption, refusal, unsupported platforms,
+or cleanup failures can leave copies, reported as gaps. Acquisition and archive extraction are separate from scanning, described by `--phone-guide`
 and available through the explicit `--collect-android` command.
 
 Indicator-context and related-record fields belong to the full report and may contain
@@ -68,6 +70,8 @@ Sharing summaries retain only fixed scope labels and cancellation state, without
 Requested JSON outputs use temporary files beside the destination and complete-file replacement.
 Acquisition encryption requests refuse plaintext results before extraction. Envelope checks
 cannot authenticate ciphertext or prove recipient ownership; decryption is a separate step.
-On acquisition failure, original/partial collector output is retained with its location reported
-and may contain unencrypted records. The helper attempts to remove its newly created incomplete
-analysis directory. Cleanup failure is reported; cleanup is not secure erasure.
+On acquisition failure, original/partial collector output and incomplete analysis are retained
+with their locations reported and may contain unencrypted records. Failure-state paths do not
+authorize recursive deletion. Stale temporary candidates are reported, never automatically
+deleted from their prefix, owner, timestamp, or a manifest. Confirm ownership and active use
+before any manual action. Cleanup is not secure erasure.

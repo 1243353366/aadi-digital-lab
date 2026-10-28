@@ -1,3 +1,4 @@
+# Modified downstream by Compass (2026-10-28): ownership and machine-state security boundaries.
 """Refuse Windows remote drives and filesystem redirections before reads.
 
 Checks are conservative and use lstat so a reparse point is inspected rather
@@ -137,11 +138,13 @@ STALE_TEMP_AGE = 12 * 3600
 
 
 def sweep_stale_temp(max_age=STALE_TEMP_AGE, now=None, base=None):
-    """Remove this tool's temporary folders left by an earlier scan that did
-    not finish. Only plain folders with the tool's prefixes, owned by this user
-    (on Windows the temporary directory is already per user), and untouched for
-    max_age seconds, so a scan running at the same time is never disturbed.
-    Returns {"removed": count, "failed": [paths that are still there]}."""
+    """Report candidates, never delete based on names, owner or age alone.
+
+    These are untrusted filesystem observations, not proof this tool created
+    the contents or that another scan is not using them. Keep the report keys
+    for compatibility; removed is always zero. Current-process cleanup uses
+    non-persistent ownership records instead of granting stale data authority.
+    """
     out = {"removed": 0, "failed": []}
     try:
         base = base or local_temp_dir()
@@ -160,11 +163,7 @@ def sweep_stale_temp(max_age=STALE_TEMP_AGE, now=None, base=None):
                 or (hasattr(os, "getuid") and info.st_uid != os.getuid())
                 or now - info.st_mtime < max_age):
             continue
-        shutil.rmtree(entry.path, ignore_errors=True)
-        if os.path.lexists(entry.path):
-            out["failed"].append(entry.path)
-        else:
-            out["removed"] += 1
+        out["failed"].append(entry.path)
     return out
 
 
@@ -241,15 +240,23 @@ def walk_local(root, onerror=None):
         pending.extend(os.path.join(current, d) for d in reversed(dirs))
 
 
-def open_evidence_db(path):
+def open_evidence_db(path, require_owned=False):
     """Open the tool's private temporary copy of an evidence database, hardened
     the same way for every reader: schema-defined functions and views are not
     trusted, nothing can be written, and string/blob, column and expression
     sizes are bounded so a hostile database cannot exhaust memory or the stack.
     Callers query only; the live original is never opened here."""
     import sqlite3
-    con = sqlite3.connect(path)
+    from pathlib import Path
+    from .ownedtemp import validate_owned_snapshot_file
+    if require_owned:
+        validate_owned_snapshot_file(path)
+    # query_only is not enough: a default SQLite connect creates a new file if
+    # the validated copy disappears before use. Refuse instead, before any SQL.
+    con = sqlite3.connect(Path(os.path.abspath(path)).as_uri() + "?mode=ro", uri=True)
     try:
+        if require_owned:
+            validate_owned_snapshot_file(path)
         con.execute("PRAGMA trusted_schema=OFF")
         con.execute("PRAGMA query_only=ON")
         con.execute("PRAGMA mmap_size=0")
@@ -257,7 +264,7 @@ def open_evidence_db(path):
             con.setlimit(sqlite3.SQLITE_LIMIT_LENGTH, 2 * 1024 * 1024)
             con.setlimit(sqlite3.SQLITE_LIMIT_COLUMN, 256)
             con.setlimit(sqlite3.SQLITE_LIMIT_EXPR_DEPTH, 100)
-    except sqlite3.Error:
+    except (OSError, sqlite3.Error):
         con.close()
         raise
     return con
