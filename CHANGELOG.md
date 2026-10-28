@@ -1,5 +1,11 @@
 # Changelog — Aadi's Digital Lab
 
+## [1.4.0] — 2026-10-28 — Compass Director + Agent integration
+
+Added the original Compass 2.2 planning module as `compass/` and mounted its frontend at `/compass/` without replacing the blog, research, Corpora, or evidence-grounded reasoning features. The same planning agent supports Director-coordinated and standalone modes. Director review generates proposed work/risk artifacts and a human decision gate, not external actions.
+
+Added an isolated, authenticated admin-only `/api/compass/*` gateway with purpose and high-risk validation, shared replay/idempotency protection, request limits, and no company-assessment persistence or external AI/retrieval calls. Added Node regression tests, frontend syncing, and credential-free local Worker smoke configuration. Existing license boundaries are preserved.
+
 ## [1.3.0] — 2026-09-18 — Reasoning layer + hardened eval suite
 
 ### Added

@@ -19,6 +19,12 @@ jobs:
       - name: Syntax-check all backend and frontend JS modules
         run: npx -y esbuild fullstack/src/index.js $(find fullstack/api fullstack/public/js -name '*.js') --outdir=.js-dist --format=esm
 
+      - name: Verify Compass Director, Agent, and authenticated gateway
+        run: npm ci --prefix compass && npm run verify
+
+      - name: Confirm Compass assets match their source
+        run: npm run sync:compass && git diff --exit-code -- fullstack/public/compass
+
       - name: Lint the D1 schema with SQLite
         run: |
           sudo apt-get install -y -q sqlite3 >/dev/null

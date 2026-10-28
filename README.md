@@ -9,9 +9,17 @@ npm dependencies.
 
 **Live:** https://aadi-digital-lab-fullstack.aadishankar1999.workers.dev
 
+## Compass Director + Agent
+
+The repository now includes Project Compass in `compass/`, mounted in the lab at `/compass/`. Director mode coordinates the same planning agent, checks traceability and purpose scope, and proposes work packages, resource warnings, and a risk register. Agent-only mode runs that same agent independently. These are original, transparent planning components—not an fMRI decoder or autonomous execution tools.
+
+The lab's `/api/compass/*` planning endpoints require an authenticated **admin session** in addition to company-purpose authorization, conditional high-risk approval, one-time tokens, replay/idempotency protection, and account/IP rate limits. Company assessments are not sent to the public Corpora/reasoning tools or saved in the blog database. See [Compass integration](COMPASS-INTEGRATION.md) for hosting and security details.
+
+Existing lab code remains MIT-licensed. `compass/` and its copied frontend under `fullstack/public/compass/` retain the separate proprietary internal-use license in `compass/LICENSE`; the merge does not relicense those files as MIT.
+
 ## Structure
 
-Everything lives in `fullstack/`:
+The original lab application lives in `fullstack/`, with the standalone Compass module in `compass/`:
 
 - `public/` - static site (pure HTML/CSS/JS, dark-mode-first)
 - `src/index.js` - Worker entry: routes every `/api/*` request
@@ -21,6 +29,8 @@ Everything lives in `fullstack/`:
 - `backup.sh` / `restore.sh` - off-site D1 backup to this repo (versioned
   history = rollback / ransomware recovery). `restore.sh --remote` is
   destructive (replaces production content).
+
+From the repository root, `npm ci --prefix compass && npm run verify` runs the Compass and gateway tests. `npm run sync:compass` regenerates the mounted Compass frontend. `npm run start:compass` runs the standalone Node application for a separate host.
 
 ## Security
 

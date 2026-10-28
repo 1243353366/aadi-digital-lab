@@ -16,12 +16,12 @@ jobs:
           node-version: "22"
 
       - name: Seed the local D1 database
-        run: npx -y wrangler@4 d1 execute blog_db --local --file=schema.sql
+        run: npx -y wrangler@4 d1 execute blog_db --local --file=schema.sql --config wrangler.smoke.toml
         working-directory: fullstack
 
       - name: Boot the Worker + D1 (GitHub-hosted sandbox)
         run: |
-          npx -y wrangler@4 dev --port 8788 > server.log 2>&1 &
+          npx -y wrangler@4 dev --config wrangler.smoke.toml --port 8788 > server.log 2>&1 &
           for i in $(seq 1 90); do
             curl -s -o /dev/null http://localhost:8788/ && break
             sleep 2
@@ -66,6 +66,13 @@ jobs:
         run: |
           curl -sI http://localhost:8788/ | grep -qi "content-security-policy" && echo "CSP header: OK"
           curl -sI http://localhost:8788/api/posts | grep -qi "x-content-type-options" && echo "nosniff header: OK"
+
+      - name: Compass page and authenticated gateway
+        run: |
+          curl -fsS http://localhost:8788/compass/ | grep -q 'Director + Agent'
+          curl -fsS http://localhost:8788/api/compass/health | grep -q 'compass-director-agent-v1'
+          CODE=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8788/api/compass/request-token)
+          [ "$CODE" = "401" ]
 
       - name: Server log tail
         if: always()

@@ -1,6 +1,7 @@
 {
   "name": "aadi-digital-lab-fullstack",
   "private": true,
-  "description": "Aadi's Digital Lab - zero-dependency Cloudflare Worker",
+  "type": "module",
+  "description": "Aadi's Digital Lab with isolated Compass Director + Agent",
   "scripts": { "deploy": "wrangler deploy" }
 }

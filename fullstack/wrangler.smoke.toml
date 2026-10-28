@@ -1,0 +1,15 @@
+# Local smoke tests only. No remote AI binding or production credentials.
+name = "aadi-digital-lab-local-smoke"
+main = "src/index.js"
+compatibility_date = "2026-05-01"
+compatibility_flags = ["global_fetch_strictly_public"]
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+not_found_handling = "404-page"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "blog_db"
+database_id = "038c5843-0c9d-43ea-8347-b8840768b95d"

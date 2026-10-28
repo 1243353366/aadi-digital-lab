@@ -1,0 +1,12 @@
+{
+  "name": "aadi-digital-lab-suite",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=20.0.0" },
+  "scripts": {
+    "sync:compass": "node scripts/sync-compass.mjs",
+    "verify": "npm --prefix compass run verify && node --test fullstack/test/*.test.mjs",
+    "start:compass": "npm --prefix compass start"
+  }
+}

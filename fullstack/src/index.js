@@ -19,6 +19,7 @@ import * as corporaSearch from "../api/corpora.js";
 import * as reasoningApi from "../api/reasoning.js";
 import * as evalApi from "../api/eval.js";
 import { SEC_HEADERS } from "../api/_shared.js";
+import { handleCompass } from "../api/compass.js";
 
 const ctx = (request, env, params) => ({ request, env, params: params || {} });
 const JSON_TYPE = { "Content-Type": "application/json; charset=utf-8", ...SEC_HEADERS };
@@ -43,6 +44,7 @@ export default {
     }
 
     try {
+      if (path.startsWith("/api/compass/")) return handleCompass(ctx(request, env));
       if (request.method === "POST" && Number(request.headers.get("Content-Length") || 0) > MAX_BODY_BYTES) {
       return new Response(JSON.stringify({ error: "Payload too large" }), { status: 413, headers: JSON_TYPE });
     }
