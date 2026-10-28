@@ -9,6 +9,18 @@ npm dependencies.
 
 **Live:** https://aadi-digital-lab-fullstack.aadishankar1999.workers.dev
 
+## Planning Studio website and local scanner
+
+The new responsive website is in [`website/`](website/README.md), alongside the existing app—not replacing it. It includes both planning modes, the shared Corpora backbone, a guided authorization flow, actual evidence-to-action briefs, delivery plans, a searchable framework library, and a separate scanner workflow. No hosting deployment is part of this source update.
+
+After downloading this repository, a person can start a real scan on their **current live computer** with:
+
+```bash
+python3 scanner/compass_scan.py
+```
+
+The command starts the read-only scan after explicit consent in the terminal, then runs unattended. It does not automatically upload evidence or grant an AI agent device-control permissions. Only a reviewed minimal sharing summary can be separately authorized for the website's bounded Agent/Director review. See [scanner setup and privacy](scanner/README.md).
+
 ## Compass Director + Agent
 
 The repository now includes Project Compass in `compass/`, mounted in the lab at `/compass/`. Director mode coordinates the same planning agent, checks traceability and purpose scope, and proposes work packages, resource warnings, and a risk register. Agent-only mode runs that same agent independently. These are original, transparent planning components—not an fMRI decoder or autonomous execution tools.

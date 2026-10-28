@@ -1,0 +1,15 @@
+import { useState } from "react";
+import { trpc } from "@/lib/trpc";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Layers3, Search, ArrowUpRight, Check, AlertTriangle, ArrowRight, Loader2 } from "lucide-react";
+import { useLocation } from "wouter";
+
+export default function Frameworks() {
+  const { data, isLoading, error } = trpc.compass.methods.useQuery();
+  const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<any>(null);
+  const [, navigate] = useLocation();
+  const methods = (data || []).filter((item: any) => `${item.name} ${item.description} ${item.label}`.toLowerCase().includes(search.toLowerCase()));
+  return <div className="page-enter"><div className="page-heading"><div><p className="eyebrow">THE APPROACH SHOULD FIT THE WORK</p><h1>Framework library</h1><p>Seven delivery approaches. Different strengths. No universal winner.</p></div><Button onClick={() => navigate("/assess")}>Find your fit <ArrowRight size={15}/></Button></div><div className="library-toolbar"><label className="search-field"><Search size={17}/><input aria-label="Search frameworks" placeholder="Search frameworks, practices, or characteristics…" value={search} onChange={e => setSearch(e.target.value)}/></label><span>{methods.length} frameworks</span></div>{isLoading && <Loader2 className="animate-spin"/>}{error && <p role="alert">Unable to load the framework library.</p>}<div className="framework-grid">{methods.map((item: any, index: number) => <button className="framework-card" key={item.id} onClick={() => setSelected(item)}><div className="framework-top"><span className={`feature-icon ${["green", "blue", "amber"][index % 3]}`}><Layers3 size={20}/></span><ArrowUpRight size={18}/></div><span className="tiny-label">{item.label}</span><h2>{item.name}</h2><p>{item.description}</p><span className="framework-link">Explore approach <ArrowRight size={14}/></span></button>)}</div>{!isLoading && methods.length === 0 && <div className="empty-state"><Search size={24}/><h2>No matching frameworks</h2><Button variant="outline" onClick={() => setSearch("")}>Clear search</Button></div>}<div className="brief-disclaimer"><AlertTriangle size={18}/><p>Compass compares operating characteristics, not guaranteed outcomes. Resource constraints, governance, and uncertainty should determine the approach.</p></div><Dialog open={!!selected} onOpenChange={value => !value && setSelected(null)}><DialogContent><DialogHeader><DialogTitle>{selected?.name}</DialogTitle><DialogDescription>{selected?.description}</DialogDescription></DialogHeader><h3>Strengths</h3>{selected?.advantages.map((text: string) => <p className="icon-line" key={text}><Check size={15}/>{text}</p>)}<h3>Tradeoffs</h3>{selected?.cautions.map((text: string) => <p className="icon-line" key={text}><AlertTriangle size={15}/>{text}</p>)}{selected && <a className="inline-link" href={selected.source.url} target="_blank" rel="noreferrer">{selected.source.publisher} reference <ArrowUpRight size={14}/></a>}</DialogContent></Dialog></div>;
+}

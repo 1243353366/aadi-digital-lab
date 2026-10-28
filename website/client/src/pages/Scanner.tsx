@@ -1,0 +1,38 @@
+import { useState } from "react";
+import { useAuth } from "@/_core/hooks/useAuth";
+import { startLogin } from "@/const";
+import { Button } from "@/components/ui/button";
+import { trpc } from "@/lib/trpc";
+import { ScanLine, Download, ShieldCheck, Terminal, FileCheck2, ArrowUpRight, AlertTriangle, Loader2, Check } from "lucide-react";
+import { toast } from "sonner";
+
+const command = "python3 scanner/compass_scan.py";
+const verdicts = new Set(["INDICATORS_FOUND", "NO_KNOWN_INDICATORS", "NO_KNOWN_INDICATORS_WITH_GAPS", "REFERENCES_ONLY", "REFERENCES_ONLY_WITH_GAPS", "WITHDRAWN_ONLY", "WITHDRAWN_ONLY_WITH_GAPS"]);
+export default function Scanner() {
+  const { user } = useAuth();
+  const [summary, setSummary] = useState<any>(null);
+  const [authorized, setAuthorized] = useState(false);
+  const [review, setReview] = useState<any>(null);
+  const token = trpc.compass.requestToken.useMutation();
+  const analyze = trpc.compass.scannerReview.useMutation();
+  async function readSummary(file?: File) {
+    setSummary(null); setAuthorized(false); setReview(null);
+    if (!file) return;
+    if (file.size > 256 * 1024) { toast.error("Use the small sharing-summary.json file, not the full report."); return; }
+    try {
+      const report = JSON.parse(await file.text());
+      if (report.report_type !== "sharing-summary" || !verdicts.has(report.verdict?.status)) throw new Error("Use Zero-Breach-Toolkit’s sharing summary, not raw evidence.");
+      const clean = { status: report.verdict.status, findings: report.verdict.findings_total, references: report.verdict.references_total, checked: report.coverage?.checked_count, gaps: report.coverage?.gap_count, cancelled: report.scope?.cancelled === true };
+      if ([clean.findings, clean.references, clean.checked, clean.gaps].some(number => !Number.isInteger(number) || number < 0 || number > 1000000)) throw new Error("Summary counts are invalid.");
+      setSummary(clean); toast.success("Summary read locally. Nothing has been sent to the server.");
+    } catch (error: any) { toast.error(error.message || "Invalid summary file."); }
+  }
+  async function reviewSummary() {
+    if (!summary || !authorized || user?.role !== "admin") return;
+    try {
+      const grant = await token.mutateAsync();
+      setReview(await analyze.mutateAsync({ summary, purposeAuthorized: true, token: grant.token, timestamp: Date.now(), idempotencyKey: crypto.randomUUID() }));
+    } catch (error: any) { toast.error(error.message); }
+  }
+  return <div className="page-enter"><div className="page-heading"><div><p className="eyebrow">A LOCAL CHECK, NOT A REMOTE CONTROL</p><h1>Device scanner</h1><p>Start on your own device. Share only what you explicitly authorize.</p></div><span className="soft-badge"><ScanLine size={14}/> Zero-Breach-Toolkit</span></div><div className="governance-banner"><ShieldCheck size={30}/><div><h2>One command. One informed choice.</h2><p>Running the command starts a real scan on your current live computer after explicit terminal consent. The read-only indicator check then runs without follow-up prompts. No administrator access, automatic upload, remote commands, or AI device access is granted.</p></div></div><div className="scan-steps">{[{ icon: Download, title: "01 · Download the repository", text: "Get the Digital Lab source, extract it on your computer, and open a terminal in the repository folder." }, { icon: Terminal, title: "02 · Run and authorize locally", text: "Run the command below. Review the displayed scope and type the explicit authorization phrase. The scan then runs unattended." }, { icon: FileCheck2, title: "03 · Review before sharing", text: "The full report stays local. Only the separate sharing summary is eligible for an optional Compass review." }].map(step => <section className="content-card" key={step.title}><span className="feature-icon green"><step.icon size={20}/></span><h3>{step.title}</h3><p>{step.text}</p></section>)}</div><div className="command-box"><button onClick={() => { navigator.clipboard.writeText(command); toast.success("Command copied. Run it only on a device you own or are authorized to inspect."); }}>Copy</button><code>{command}</code></div><p className="policy-note">Requires Python 3.10+. Windows: <code>py -3 scanner/compass_scan.py</code>. To inspect the launcher without scanning, add <code>--preview</code>. Existing offline phone backups are supported with <code>--backup PATH</code>; live phone acquisition is not included.</p><a className="inline-link" href="https://github.com/1243353366/aadi-digital-lab/tree/main/scanner" target="_blank" rel="noreferrer">Scanner source and setup <ArrowUpRight size={14}/></a><div className="warning-note mt-6"><AlertTriangle size={20}/><div><strong>A clean result is not a clean bill of health.</strong><p>Known indicators are not all spyware. Skipped checks are coverage gaps—not proof of safety. Source evidence is read-only, but temporary snapshots and reports are written locally. This is not an operating-system sandbox; strict isolation must be configured on the device.</p></div></div><section className="content-card mt-6"><h3>Optional · Share a minimal summary</h3><p>Select <code>sharing-summary.json</code>. The browser reads it locally and discards all fields except known status and aggregate counts. Full reports, paths, profiles, messages, indicator values, and arbitrary instructions are never sent through this review endpoint.</p><label className="scanner-file mt-5">Choose a minimal sharing summary<input className="block mt-3 text-xs" type="file" accept=".json,application/json" onChange={e => readSummary(e.target.files?.[0])}/></label>{summary && <><div className="scan-metrics"><div><strong>{summary.findings}</strong><span>Actionable indicator matches</span></div><div><strong>{summary.checked}</strong><span>Checks completed</span></div><div><strong>{summary.gaps}</strong><span>Coverage gaps</span></div></div><label className="consent-check"><input type="checkbox" checked={authorized} onChange={e => setAuthorized(e.target.checked)}/><div><strong>Separate · Security-summary processing</strong><p>I am authorized to share this minimal summary and explicitly authorize its use by Compass’s bounded Agent and Director review for security recommendations only. This does not authorize training, device control, or unrelated use.</p></div></label><div className="flex items-center gap-3 mt-5">{!user ? <Button onClick={() => startLogin()}>Sign in for authorized review</Button> : <Button disabled={!authorized || user.role !== "admin" || token.isPending || analyze.isPending} onClick={reviewSummary}>{token.isPending || analyze.isPending ? <Loader2 size={16} className="animate-spin"/> : <ShieldCheck size={16}/>} Review aggregate summary</Button>}<p className="policy-note">Administrator permission is enforced server-side.</p></div></>}</section>{review && <section className="content-card"><span className="soft-badge">Human review required—not a diagnosis</span><h3 className="mt-4">A traceable security recommendation</h3><dl className="trace-card mt-4 p-4">{[["evidence", "Evidence"], ["interpretation", "Interpretation"], ["recommendation", "Recommendation"], ["action", "Action"], ["owner", "Owner"], ["dependency", "Dependency"], ["successCriterion", "Success criterion"]].map(([key, label]) => <div className="mb-4" key={key}><dt className="tiny-label">{label}</dt><dd className="text-xs mt-1 leading-relaxed">{review.trace[key]}</dd></div>)}</dl>{review.directorChecks.map((check: string) => <p className="icon-line" key={check}><Check size={14}/>{check}</p>)}<p>{review.notice}</p></section>}</div>;
+}

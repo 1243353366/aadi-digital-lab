@@ -2,6 +2,7 @@ name: Deploy to Cloudflare Workers
 on:
   push:
     branches: [main]
+    paths: ["fullstack/**"]
   workflow_dispatch:
 jobs:
   deploy:

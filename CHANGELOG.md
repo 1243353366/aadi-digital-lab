@@ -1,5 +1,11 @@
 # Changelog — Aadi's Digital Lab
 
+## [1.5.0] — 2026-10-28 — Planning Studio website + local scanner
+
+Added the complete responsive `website/` source with guided company intake, both execution modes, a request-scoped Corpora backbone, traceable recommendations, delivery plans, framework search, governance pages, and a synthetic public demo. Private processing remains administrator-only with database-backed short-lived guards and independent purpose gates.
+
+Added `python3 scanner/compass_scan.py`: a real standard scan on the runner's current live computer, starting only after explicit terminal consent. Zero-Breach-Toolkit 0.1.9 is pinned with provenance checks and license notices. Reports stay local. Optional website review accepts only allowlisted sharing-summary counts/status under separate authorization; no raw evidence, training, or host execution capability is granted to agents. Added website and no-scan launcher regression tests. No real device was scanned during development, and no hosting deployment was performed. Deploy-on-push is now limited to actual `fullstack/` changes.
+
 ## [1.4.0] — 2026-10-28 — Compass Director + Agent integration
 
 Added the original Compass 2.2 planning module as `compass/` and mounted its frontend at `/compass/` without replacing the blog, research, Corpora, or evidence-grounded reasoning features. The same planning agent supports Director-coordinated and standalone modes. Director review generates proposed work/risk artifacts and a human decision gate, not external actions.

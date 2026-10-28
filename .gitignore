@@ -10,3 +10,9 @@ node_modules/
 .wrangler/
 dist/
 .dev.vars
+
+# Python / managed preview metadata
+__pycache__/
+*.pyc
+.manus-logs/
+.project-config.json
