@@ -21,6 +21,14 @@ python3 scanner/compass_scan.py
 
 The command starts the read-only scan after explicit consent in the terminal, then runs unattended. It does not automatically upload evidence or grant an AI agent device-control permissions. Only a reviewed minimal sharing summary can be separately authorized for the website's bounded Agent/Director review. See [scanner setup and privacy](scanner/README.md).
 
+To audit the scanner itself, without scanning a device or changing its original results:
+
+```bash
+python3 scanner/audit_scanner.py
+```
+
+This separate audit checks the pinned source and 42 synthetic matcher, evidence, and coverage regressions. Audit warnings are not device findings and do not override the original scanner's verdicts. Passing the audit does not eliminate false positives or false negatives. See [scanner audit findings](scanner/AUDIT.md).
+
 ## Compass Director + Agent
 
 The repository now includes Project Compass in `compass/`, mounted in the lab at `/compass/`. Director mode coordinates the same planning agent, checks traceability and purpose scope, and proposes work packages, resource warnings, and a risk register. Agent-only mode runs that same agent independently. These are original, transparent planning components—not an fMRI decoder or autonomous execution tools.
@@ -62,3 +70,15 @@ comments, likes, the auth gate, and security headers.
 ```bash
 cd fullstack && ./deploy.sh
 ```
+
+## Authors and attribution
+
+**Aadi’s Digital Lab:** Copyright © 2026 **Aadi Shankar**, as recorded in the root [MIT license](LICENSE). The public repository contributor account is [@1243353366](https://github.com/1243353366). Original Corpora/Compass work is credited to the [Corpora AI project / @1243353366](https://github.com/1243353366/corpora-ai); its included copyright is © 2026 1243353366 and its [separate internal-use license](compass/LICENSE) remains in force. The Compass/Director, website, and audit additions were developed with **Manus AI assistance**; that does not change ownership or component licenses.
+
+**Scanner authors:** [ArchiveGenocide / archivegenocide.com (@interplains)](https://github.com/interplains) is credited by the upstream NOTICE files for both [Zero Breach](https://github.com/interplains/zero-breach) and [Zero Breach Toolkit](https://github.com/interplains/Zero-Breach-Toolkit), built by the same authors. Verified public contributors additionally include [@NurAbir](https://github.com/NurAbir) for Zero Breach and **[Luke Hutchison (@lukehutch)](https://github.com/lukehutch)** for Zero Breach Toolkit. The [Zero Breach contributor record](https://github.com/interplains/zero-breach/graphs/contributors) and [Toolkit contributor record](https://github.com/interplains/Zero-Breach-Toolkit/graphs/contributors) retain the current upstream contribution histories. These project credits do not imply that every contributor authored every file.
+
+**Indicator and research sources:** Credit goes to **The Citizen Lab**, **Recorded Future / Insikt Group**, **Confiant**, **Microsoft**, **ESET**, **Avast / Gen**, **Google Threat Analysis Group**, and **Amnesty International Security Lab**, as documented in the retained [indicator bibliography and CC0 notice](scanner/vendor/zero-breach/iocs/LICENSE.md). External optional feeds additionally credit the **Mobile Verification Toolkit (MVT) project** and **Echap**; these are source acknowledgments, not software authorship or claims that those external feeds are bundled or automatically downloaded.
+
+**Third-party detection-rule authors:** The retained optional Candiru rule material credits **Microsoft Threat Intelligence Center (MSTIC)** for `MAL_DevilsTongue_HijackDll` and **Felix Bilstein** for `win_devilstongue_auto`. Their Detection Rule License 1.1 and CC BY-SA 4.0 materials remain under [third_party/candiru](scanner/vendor/zero-breach/third_party/candiru/). These optional rules are not enabled by the standard Compass launcher.
+
+The original [scanner NOTICE](scanner/vendor/zero-breach/NOTICE), Apache-2.0 license, data notices, and rule licenses are preserved. Application dependencies retain their own upstream authors and licenses. **HuthLab is referenced, not incorporated**: no HuthLab code, brain recordings, datasets, models, or neural-decoding implementation is included. Credits imply neither affiliation nor endorsement and grant no device access, training permission, or broader license rights.

@@ -26,6 +26,16 @@ python3 scanner/compass_scan.py --backup /path/to/local/backup
 
 An encrypted iPhone backup additionally needs `--encrypted-backup`; its password is entered privately. Live phone acquisition, Android USB enrollment, indicator downloading, remediation, root elevation, and experimental pattern scans are not part of this launcher.
 
+## Scan the scanner, not the device
+
+```bash
+python3 scanner/audit_scanner.py
+```
+
+This separate audit verifies the pinned package and runs 42 synthetic matching, evidence-grade, and coverage-state checks. It does not invoke browser, host, phone, or normal scan entry points. The device command, indicator data, evidence grades, verdicts, and original scan results remain unchanged.
+
+Use `--json audit-report.json` to save a separate report in a new file outside the scanner source tree. Audit output cannot overwrite an existing file or be used as a device sharing summary. Audit exit codes are `0` for passed checks, `2` for failed checks, and `1` when the audit cannot complete; they are not device infection verdicts. See [audit findings](AUDIT.md). The related scanners share code and indicator lineage, so their agreement is not independent corroboration. Passing known fixtures cannot establish real-world error rates or eliminate all false alarms/misses.
+
 ## Local output and separate AI consent
 
 Reports and a versioned consent record are written under a new directory in the operating system's temporary folder: `compass-scans/<random-id>/`. The terminal prints the exact location. `full-report.json` may contain private paths, browser details, or message excerpts. It remains on the local device. The separate `sharing-summary.json` contains aggregate counts and a status, without raw artifact content.
@@ -42,4 +52,4 @@ The vendored scanner is pinned to [Zero-Breach-Toolkit](https://github.com/inter
 
 To reproduce the vendor package from a reviewed local checkout, run `python3 scripts/package_scanner.py /path/to/Zero-Breach-Toolkit`. The packager refuses any other revision and does not download code or run a scan.
 
-Tests: `python3 -m unittest discover -s scanner/tests -v`. The tests exercise help, source checks, consent refusal/cancellation, and upstream metadata only. **No real device scan was performed as part of building this integration.**
+Tests: `python3 -m unittest discover -s scanner/tests -v`. The 11 integration tests exercise source integrity, consent refusal/cancellation, upstream metadata, and the separate synthetic scanner audit. **No real device scan was performed as part of building this integration.** Verified authors, contributors, research publishers, and rule authors are credited in the [root README](../README.md#authors-and-attribution), with original notices and licenses retained.

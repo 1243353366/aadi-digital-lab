@@ -1,5 +1,9 @@
 # Changelog — Aadi's Digital Lab
 
+## [1.5.1] — 2026-10-28 — Separate scanner-on-scanner audit and credits
+
+Added `python3 scanner/audit_scanner.py`: package integrity plus 42 synthetic matcher, evidence, and coverage checks, with a separate audit report and no device scanning. The original live scanner, indicator bytes, scan results, and website interpretation are unchanged. Added five audit safety regressions to the existing six launcher tests and credited verified authors, upstream contributors, research publishers, and optional rule authors in the root README. The audit does not claim to eliminate detection errors or certify a device as safe.
+
 ## [1.5.0] — 2026-10-28 — Planning Studio website + local scanner
 
 Added the complete responsive `website/` source with guided company intake, both execution modes, a request-scoped Corpora backbone, traceable recommendations, delivery plans, framework search, governance pages, and a synthetic public demo. Private processing remains administrator-only with database-backed short-lived guards and independent purpose gates.
