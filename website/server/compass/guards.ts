@@ -50,3 +50,11 @@ export async function consumePlanningGrant(args: { userId: number; session: stri
   await quota(`account:${args.userId}`, "planning-minute", 30, 60_000);
   await quota(`ip:${args.ip}`, "planning-minute", 90, 60_000);
 }
+
+export async function consumeComplementaryQuota(userId: number) {
+  await quota(`account:${userId}`, "complementary-minute", 2, 60_000);
+  await quota(`account:${userId}`, "complementary-hour", 10, 3_600_000);
+  // A shared pool ceiling is stricter than multiplying allowance by 7 keys.
+  // One database must be shared by all replicas for this guarantee to hold.
+  await quota("workspace:shared", "complementary-pool-hour", 10, 3_600_000);
+}

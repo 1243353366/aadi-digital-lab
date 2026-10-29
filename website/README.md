@@ -4,6 +4,8 @@ A responsive website for objective-led project planning, with Director + Agent a
 
 This website is a standalone sibling of Digital Lab's existing `fullstack/` app. Adding its source does not replace the blog, research APIs, or the earlier Compass integration. No Render or other hosting deployment is performed by this source update.
 
+Keep sibling `../integrations/freellmapi/` when building from a checkout; the adapter is bundled into the Node server. The [optional keyless job skeleton](../integrations/freellmapi/README.md) is disabled by default and needs no API-key setup. An authenticated-only gateway remains unavailable rather than receiving a fabricated key or having authentication bypassed.
+
 ## Develop and verify
 
 From this directory, use Node 22 and the pinned package manager:
@@ -29,7 +31,9 @@ For an independent deployment, configure the runtime rather than committing valu
 
 The current [corpora-ai](https://github.com/1243353366/corpora-ai) Compass engine is vendored server-side from base commit `9c92e79df7f4d53371c8b62c7b340c4c3a9bdbc2`. Director/Agent extensions originate in Digital Lab commit `9b893da72826115fa187e6bdaf5979262540f57e`; the website adds a request-scoped signal trail and reusable Director traceability validation. Both business-planning modes invoke the identical planning agent once.
 
-The components are transparent, rule-based software—not neural decoding or autonomous shell agents. Company information is not sent to GitHub, public research endpoints, external LLMs, or training pipelines. Permission is mechanically recomputed outside reasoning. Shell, credential, arbitrary network, deployment, training, cross-tenant access, and privilege escalation remain unavailable capabilities.
+The baseline components are transparent, rule-based software—not neural decoding or autonomous shell agents. Normal planning sends no company information to GitHub, public research endpoints, external LLMs, or training pipelines. A separate disabled-by-default job can send only the selected method and generic tradeoffs to an operator-approved keyless local endpoint after additional external-purpose consent. Raw intake, identities, budgets, objectives and scan reports are excluded; high-risk assessments are blocked. Its untrusted narrative does not change the core recommendation or grant agent authority. Permission is recomputed outside reasoning. Shell, credential access, arbitrary network, deployment, training, cross-tenant access and privilege escalation remain unavailable agent capabilities. A local gateway may contact its own downstream providers; their retention/training terms must be reviewed separately.
+
+Direct Node startup now binds `127.0.0.1` by default. If hosting behind a trusted proxy/container, explicitly configure `HOST` for the intended network interface and `PUBLIC_ORIGIN` for the site's exact public origin; incoming Host/origin validation does not trust caller-supplied forwarded headers. API admission limits and role checks run before JSON parsing; JSON is capped at 64 KiB and URL-encoded forms at 16 KiB, with compression refused. Ingress uses connection-peer IP, hard-bounded counters and limited active API requests. Behind a proxy, callers may share its quota; a trusted edge should add independent per-client controls. These in-process ingress controls are not a distributed WAF or an upstream-provider audit.
 
 ## Local scanner
 

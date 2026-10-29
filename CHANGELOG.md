@@ -1,5 +1,13 @@
 # Changelog — Aadi's Digital Lab
 
+## [Security branch] — 2026-10-28 — Keyless complementary jobs and ingress hardening
+
+Added an original optional adapter using FreeLLMAPI's API contract, with upstream commit/author/MIT attribution and SHA-256 source verification. The updated requirement is keyless: no seven-key store, credential slots, bearer headers or API-key configuration. It accepts only a keyless numeric-loopback endpoint and remains disabled by default; authenticated endpoints fail safely rather than bypassing authentication.
+
+Both Director/Agent modes retain their baseline. Optional explanations require authenticated administrator status, separate versioned external-purpose consent, origin/replay protection and stricter shared database quotas (2/minute per account, 10/hour per account, 10/hour for the pool). Only the suggested method and generic tradeoffs are sent; raw company intake and scan reports are excluded, and high-risk assessments are refused. Added single-flight request-scoped jobs, byte/time/token budgets, no retry on 429, mock-only tests, UI opt-in and isolated CI.
+
+The website's existing 50 MB pre-auth JSON parser is replaced with pre-parser admission/role checks and 64 KiB JSON/16 KiB form limits. Direct-server binding defaults to loopback; non-loopback bind and public-origin allowlisting require explicit operator configuration. Admission counters are hard-bounded, concurrency is capped, and raw proxy Host/IP assertions are not accepted as authority. The adapter rejects unbounded response readers, remote endpoints and redirects. These are scoped, reproducible hardening changes—not certification of FreeLLMAPI or publication of an unverified upstream exploit. No upstream server/dashboard/credential store is imported or run. No model training, tools, deployment capability, live API use or hosting activation is added. Local gateway terms/logging and native FreeLLMAPI authentication remain the operator's responsibility.
+
 ## [Security branch] — 2026-10-28 — Safe local misuse restrictions
 
 Added a transparent, non-retaliatory launcher guard: existing-directory backup scope checks before and after consent, URL/UNC/link/reparse rejection, one advisory active slot per account/temp root, 1800-second default runtime with a 1–3600-second range, and `COMPASS_SCANNER_DISABLED=1` to refuse new work. Timeout/cancellation stops only the scanner child created by the wrapper and records incomplete coverage locally. Original scan verdicts are retained on completed runs. No telemetry, hostile commands, intent classification, permanent bans, recursive deletion, or remote probing is added. Unsupported/tampered state refuses work; it never grants permissions.

@@ -1,0 +1,15 @@
+{
+  "repository": "https://github.com/tashfeenahmed/freellmapi",
+  "upstreamCommit": "4f8a95040f5921d9eee9db8e50a343fd9ec4d93d",
+  "implementation": "Original Compass keyless OpenAI-compatible adapter, not vendored upstream server",
+  "keyless": true,
+  "sha256": {
+    "adapter.js": "077258a3d8cb3fe4487461a43a885098efd9fe91df3708867b6ca7e14fc4c6d1",
+    "adapter.d.ts": "b3266376b5932305b13aa9fcfed80290ea931a5b98c5ecc778da09fde3074879",
+    "adapter.test.mjs": "8d793bc988092e2ed52a15665478a7a654c29a681c6762522c80598f0fbfdf06",
+    "LICENSE": "d32d45dfea4847f158db264ae8afb67f1a390e4f28cf18bf088a564f44c7f0b9",
+    "README.md": "43b86b375aff392bfb2b50720840455854a3d6bf3470194ab49e96deb15e48b7",
+    "verify.mjs": "8f2d708fe51ceb234197feb611b2c3d02384aaecbc7db6afbf483b46e9596fd4",
+    "SECURITY-NOTES.md": "c5bb844208d3a8d909663b82a608825f36e0cf5cd6b26d636bab585f516c6b43"
+  }
+}
