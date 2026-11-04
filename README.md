@@ -82,3 +82,7 @@ cd fullstack && ./deploy.sh
 **Third-party detection-rule authors:** The retained optional Candiru rule material credits **Microsoft Threat Intelligence Center (MSTIC)** for `MAL_DevilsTongue_HijackDll` and **Felix Bilstein** for `win_devilstongue_auto`. Their Detection Rule License 1.1 and CC BY-SA 4.0 materials remain under [third_party/candiru](scanner/vendor/zero-breach/third_party/candiru/). These optional rules are not enabled by the standard Compass launcher.
 
 The original [scanner NOTICE](scanner/vendor/zero-breach/NOTICE), Apache-2.0 license, data notices, and rule licenses are preserved. Application dependencies retain their own upstream authors and licenses. **HuthLab is referenced, not incorporated**: no HuthLab code, brain recordings, datasets, models, or neural-decoding implementation is included. Credits imply neither affiliation nor endorsement and grant no device access, training permission, or broader license rights.
+
+---
+
+Thanks for reading. More of my work: [github.com/1243353366](https://github.com/1243353366).
